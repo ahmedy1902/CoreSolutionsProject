@@ -1,0 +1,589 @@
+/**
+ * Custom Feature Layer Editor Module (ESM)
+ * ArcGIS Maps SDK for JavaScript v5.1
+ *
+ * Based on the official "Update FeatureLayer using applyEdits()" sample pattern.
+ * Adapted for POLYGON geometry with SketchViewModel for drawing/reshaping.
+ *
+ * Uses: FeatureForm, FeatureTemplates, SketchViewModel, applyEdits()
+ * Layer fields: FullName (String), Email (String), InputDate (Date)
+ * Geometry: esriGeometryPolygon
+ */
+import SketchViewModel from "https://js.arcgis.com/5.1/@arcgis/core/widgets/Sketch/SketchViewModel.js";
+import GraphicsLayer from "https://js.arcgis.com/5.1/@arcgis/core/layers/GraphicsLayer.js";
+import Graphic from "https://js.arcgis.com/5.1/@arcgis/core/Graphic.js";
+import Expand from "https://js.arcgis.com/5.1/@arcgis/core/widgets/Expand.js";
+import FeatureForm from "https://js.arcgis.com/5.1/@arcgis/core/widgets/FeatureForm.js";
+import FeatureTemplates from "https://js.arcgis.com/5.1/@arcgis/core/widgets/FeatureTemplates.js";
+import Extent from "https://js.arcgis.com/5.1/@arcgis/core/geometry/Extent.js";
+
+// Module-level state
+let viewInstance = null;
+let featureLayer = null;
+let sketchVM = null;
+let sketchLayer = null;
+let featureForm = null;
+
+let editFeature = null;
+let highlight = null;
+let isAddingNew = false;
+
+// ==========================================
+// PUBLIC API (exported to app.js)
+// ==========================================
+
+/**
+ * Initializes the custom feature editor panel
+ * @param {Object} mapContext - { view, map, webmap, operationalLayer }
+ */
+export async function init(mapContext) {
+  viewInstance = mapContext.view;
+  featureLayer = mapContext.operationalLayer;
+
+  if (!featureLayer) {
+    console.error("[Editor] Operational layer not found!");
+    return;
+  }
+
+  console.info("[Editor] Initializing Custom Feature Editor for layer:", featureLayer.title);
+
+  // Expose zoomToAll globally
+  setupGlobalHelpers();
+
+  // 1. Graphics layer for sketching polygons
+  sketchLayer = new GraphicsLayer({ title: "Sketching Layer", listMode: "hide" });
+  viewInstance.map.add(sketchLayer);
+
+  // 2. SketchViewModel for polygon drawing and reshaping
+  sketchVM = new SketchViewModel({
+    view: viewInstance,
+    layer: sketchLayer,
+    polygonSymbol: {
+      type: "simple-fill",
+      color: [0, 121, 193, 0.4],
+      outline: { color: [0, 121, 193, 1], width: 2 }
+    },
+    updateOnGraphicClick: true
+  });
+
+  // 3. FeatureForm for attribute editing (like the sample)
+  featureForm = new FeatureForm({
+    container: "formDiv",
+    layer: featureLayer,
+    formTemplate: {
+      title: "Feature Attributes",
+      elements: [
+        { type: "field", fieldName: "FullName", label: "Full Name" },
+        { type: "field", fieldName: "Email", label: "Email Address" },
+        { type: "field", fieldName: "InputDate", label: "Input Date" }
+      ]
+    }
+  });
+
+  // 4. FeatureTemplates for selecting a template to create new features
+  const templates = new FeatureTemplates({
+    container: "addTemplatesDiv",
+    layers: [featureLayer]
+  });
+
+  // 5. Expand widget to house the editArea panel on the map
+  const editAreaEl = document.getElementById("editArea");
+  if (editAreaEl) {
+    editAreaEl.style.display = "block";
+    const editExpand = new Expand({
+      expandIcon: "pencil",
+      expandTooltip: "Custom Editor",
+      expanded: true,
+      view: viewInstance,
+      content: editAreaEl
+    });
+    viewInstance.ui.add(editExpand, "top-right");
+  }
+
+  // 6. Wire up event listeners
+  setupTemplateSelection(templates);
+  setupSketchEvents();
+  setupMapClickSelection();
+  setupEditorButtons();
+
+  // 7. Initial feature list load
+  await refreshFeaturesList();
+}
+
+// ==========================================
+// TEMPLATE SELECTION → START DRAWING
+// ==========================================
+
+function setupTemplateSelection(templates) {
+  templates.on("select", () => {
+    clearEditor();
+    isAddingNew = true;
+    toggleCancelButtons(true);
+
+    // Update instructions
+    setEditorStatus("Drawing Polygon: Click on map to add vertices, double-click to finish");
+    showToast("Click on map to draw polygon vertices. Double-click to complete.", "info");
+
+    // Activate polygon drawing
+    sketchVM.create("polygon");
+  });
+}
+
+// ==========================================
+// SKETCH EVENTS
+// ==========================================
+
+function setupSketchEvents() {
+  // When polygon drawing is complete or cancelled
+  sketchVM.on("create", (event) => {
+    if (event.state === "complete") {
+      console.log("[Editor] Polygon drawn:", event.geometry);
+      toggleCancelButtons(false);
+
+      // Create a temporary graphic with empty attributes
+      editFeature = new Graphic({
+        geometry: event.geometry,
+        attributes: { FullName: "", Email: "", InputDate: Date.now() }
+      });
+
+      sketchLayer.add(editFeature);
+
+      // Show FeatureForm for the new feature
+      featureForm.feature = editFeature;
+      document.getElementById("updateHeader").innerText = "Fill New Feature Details";
+      toggleEditingDivs(false);
+      setEditorStatus("Enter feature attributes and click Save");
+    } else if (event.state === "cancel") {
+      toggleCancelButtons(false);
+    }
+  });
+
+  // When geometry reshape/update is complete
+  sketchVM.on("update", (event) => {
+    if (event.state === "complete" && event.graphics.length > 0 && editFeature) {
+      editFeature.geometry = event.graphics[0].geometry;
+      console.log("[Editor] Geometry reshape completed.");
+    }
+  });
+}
+
+// ==========================================
+// MAP CLICK → SELECT EXISTING FEATURE
+// ==========================================
+
+function setupMapClickSelection() {
+  viewInstance.on("click", async (event) => {
+    // Don't intercept clicks if actively drawing
+    if (sketchVM.state === "active" || isAddingNew) return;
+
+    const response = await viewInstance.hitTest(event, { include: [featureLayer] });
+
+    if (response.results.length === 0) {
+      // Clicked empty space → show templates panel
+      toggleEditingDivs(true);
+      return;
+    }
+
+    // User clicked an existing feature → enter edit mode
+    clearEditor();
+
+    const clickedGraphic = response.results[0].graphic;
+    const oidField = featureLayer.objectIdField || "OBJECTID";
+    const oid = clickedGraphic.attributes[oidField];
+
+    // Query full feature from server
+    const featureSet = await featureLayer.queryFeatures({
+      objectIds: [oid],
+      outFields: ["*"],
+      returnGeometry: true
+    });
+
+    if (featureSet.features.length > 0) {
+      editFeature = featureSet.features[0];
+
+      // Show attributes in FeatureForm
+      featureForm.feature = editFeature;
+
+      // Highlight on map
+      const layerView = await viewInstance.whenLayerView(featureLayer);
+      highlight = layerView.highlight(editFeature);
+
+      // Add a clone to sketchLayer for geometry reshaping
+      const editGraphic = editFeature.clone();
+      sketchLayer.add(editGraphic);
+      sketchVM.update([editGraphic], { tool: "reshape" });
+
+      document.getElementById("updateHeader").innerText = `Update Feature #${oid}`;
+      toggleEditingDivs(false);
+      setEditorStatus(`Editing Feature #${oid}`);
+    }
+  });
+}
+
+// ==========================================
+// EDITOR BUTTONS (Save / Delete / Cancel)
+// ==========================================
+
+function setupEditorButtons() {
+  // Save / Update button
+  const btnUpdate = document.getElementById("btnUpdate");
+  if (btnUpdate) {
+    btnUpdate.addEventListener("click", async () => {
+      if (!editFeature) {
+        showToast("No feature to save.", "warning");
+        return;
+      }
+
+      // Grab updated attributes from FeatureForm
+      const values = featureForm.getValues();
+      Object.keys(values).forEach(key => {
+        editFeature.attributes[key] = values[key];
+      });
+
+      // Capture latest geometry from SketchVM
+      if (sketchLayer.graphics.length > 0) {
+        editFeature.geometry = sketchLayer.graphics.getItemAt(0).geometry;
+      }
+
+      if (isAddingNew) {
+        // CREATE: Send clean graphic with only editable attributes
+        const addGraphic = new Graphic({
+          geometry: editFeature.geometry,
+          attributes: {
+            FullName: editFeature.attributes.FullName || "",
+            Email: editFeature.attributes.Email || "",
+            InputDate: editFeature.attributes.InputDate || Date.now()
+          }
+        });
+        await applyEditsToLayer({ addFeatures: [addGraphic] });
+      } else {
+        // UPDATE: Include OBJECTID + editable fields only
+        const oidField = featureLayer.objectIdField || "OBJECTID";
+        const updateGraphic = new Graphic({
+          geometry: editFeature.geometry,
+          attributes: {
+            [oidField]: editFeature.attributes[oidField],
+            FullName: editFeature.attributes.FullName || "",
+            Email: editFeature.attributes.Email || "",
+            InputDate: editFeature.attributes.InputDate || Date.now()
+          }
+        });
+        await applyEditsToLayer({ updateFeatures: [updateGraphic] });
+      }
+    });
+  }
+
+  // Delete button
+  const btnDelete = document.getElementById("btnDelete");
+  if (btnDelete) {
+    btnDelete.addEventListener("click", async () => {
+      if (!editFeature || isAddingNew) {
+        showToast("Select an existing feature to delete.", "warning");
+        return;
+      }
+
+      if (confirm("Are you sure you want to delete this polygon feature?")) {
+        const oidField = featureLayer.objectIdField || "OBJECTID";
+        const deleteGraphic = new Graphic({
+          attributes: { [oidField]: editFeature.attributes[oidField] }
+        });
+        await applyEditsToLayer({ deleteFeatures: [deleteGraphic] });
+      }
+    });
+  }
+
+  // Cancel button inside form
+  const btnCancel = document.getElementById("btnCancel");
+  if (btnCancel) {
+    btnCancel.addEventListener("click", () => {
+      clearEditor();
+      setEditorStatus("Ready");
+    });
+  }
+
+  // Cancel Drawing buttons (Header, Panel, Floating Pill)
+  const cancelDrawingButtons = [
+    document.getElementById("btn-cancel-add-feature"),
+    document.getElementById("btn-cancel-draw-panel"),
+    document.getElementById("btn-cancel-drawing-pill")
+  ];
+
+  cancelDrawingButtons.forEach(btn => {
+    if (btn) {
+      btn.addEventListener("click", () => {
+        clearEditor();
+        setEditorStatus("Ready");
+        showToast("Feature addition cancelled.", "info");
+      });
+    }
+  });
+
+  // ESC key handler to cancel drawing
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && (isAddingNew || (sketchVM && sketchVM.state === "active"))) {
+      clearEditor();
+      setEditorStatus("Ready");
+      showToast("Feature addition cancelled.", "info");
+    }
+  });
+
+  // Header "Add Feature" button (alternative entry point)
+  const btnStartAdd = document.getElementById("btn-start-add-feature");
+  if (btnStartAdd) {
+    btnStartAdd.addEventListener("click", () => {
+      clearEditor();
+      isAddingNew = true;
+      toggleCancelButtons(true);
+      setEditorStatus("Drawing Polygon: Click on map, double-click to finish");
+      showToast("Click on map to draw polygon vertices. Double-click to complete.", "info");
+      sketchVM.create("polygon");
+    });
+  }
+
+  // Refresh table button in drawer
+  const btnRefresh = document.getElementById("btn-refresh-features");
+  if (btnRefresh) {
+    btnRefresh.addEventListener("click", () => refreshFeaturesList());
+  }
+}
+
+// ==========================================
+// applyEdits WRAPPER (like the sample)
+// ==========================================
+
+async function applyEditsToLayer(params) {
+  try {
+    setEditorStatus("Saving edits to server...");
+    console.log("[Editor] Calling featureLayer.applyEdits()", params);
+
+    const result = await featureLayer.applyEdits(params);
+
+    // Check for errors in results
+    if (result.addFeatureResults && result.addFeatureResults.length > 0) {
+      if (result.addFeatureResults[0].error) throw result.addFeatureResults[0].error;
+      const oid = result.addFeatureResults[0].objectId;
+      showToast(`Feature created successfully! (ID: #${oid})`, "success");
+      console.info("[Editor] Feature added, ObjectID:", oid);
+    }
+
+    if (result.updateFeatureResults && result.updateFeatureResults.length > 0) {
+      if (result.updateFeatureResults[0].error) throw result.updateFeatureResults[0].error;
+      const oid = result.updateFeatureResults[0].objectId;
+      showToast(`Feature #${oid} updated successfully!`, "success");
+      console.info("[Editor] Feature updated, ObjectID:", oid);
+    }
+
+    if (result.deleteFeatureResults && result.deleteFeatureResults.length > 0) {
+      if (result.deleteFeatureResults[0].error) throw result.deleteFeatureResults[0].error;
+      const oid = result.deleteFeatureResults[0].objectId;
+      showToast(`Feature #${oid} deleted successfully!`, "success");
+      console.info("[Editor] Feature deleted, ObjectID:", oid);
+    }
+
+    // Clean up and refresh
+    clearEditor();
+    featureLayer.refresh();
+    await refreshFeaturesList();
+    setEditorStatus("Idle");
+
+  } catch (err) {
+    console.error("[Editor] applyEdits failed:", err);
+    showToast(`Error saving edits: ${err.message || err}`, "error");
+    setEditorStatus("Error during edit operation");
+  }
+}
+
+// ==========================================
+// FEATURES DATA TABLE / DRAWER
+// ==========================================
+
+export async function refreshFeaturesList() {
+  const tableBody = document.getElementById("features-table-body");
+  const countBadge = document.getElementById("features-count-badge");
+  if (!tableBody || !featureLayer) return;
+
+  tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-muted);">Loading layer features...</td></tr>`;
+
+  try {
+    const results = await featureLayer.queryFeatures({
+      where: "1=1",
+      outFields: ["*"],
+      returnGeometry: true
+    });
+
+    const features = results.features || [];
+    const oidField = featureLayer.objectIdField || "OBJECTID";
+
+    // Sort by OBJECTID descending
+    features.sort((a, b) => {
+      const idA = (a.attributes && a.attributes[oidField]) || 0;
+      const idB = (b.attributes && b.attributes[oidField]) || 0;
+      return idB - idA;
+    });
+
+    if (countBadge) countBadge.textContent = features.length.toString();
+
+    if (features.length === 0) {
+      tableBody.innerHTML = `
+        <tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-muted);">
+          No features found. Click <strong>"Add Feature"</strong> or select a template to draw the first polygon!
+        </td></tr>`;
+      return;
+    }
+
+    tableBody.innerHTML = "";
+
+    features.forEach(feat => {
+      const attrs = feat.attributes;
+      const oid = attrs[oidField];
+      const name = attrs.FullName || "—";
+      const email = attrs.Email || "—";
+      const dateStr = attrs.InputDate ? new Date(attrs.InputDate).toLocaleDateString() : "—";
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><strong>#${oid}</strong></td>
+        <td>${escapeHtml(name)}</td>
+        <td>${escapeHtml(email)}</td>
+        <td>${dateStr}</td>
+        <td class="action-cell">
+          <button type="button" class="btn-sm-action btn-zoom" title="Zoom to Feature">Zoom</button>
+          <button type="button" class="btn-sm-action btn-edit" title="Edit Feature">Edit</button>
+          <button type="button" class="btn-sm-action btn-delete" title="Delete Feature">Del</button>
+        </td>`;
+
+      tr.querySelector(".btn-zoom").addEventListener("click", () => {
+        if (feat.geometry) viewInstance.goTo({ target: feat.geometry, zoom: 16 });
+      });
+
+      tr.querySelector(".btn-edit").addEventListener("click", () => {
+        selectFeatureById(oid);
+      });
+
+      tr.querySelector(".btn-delete").addEventListener("click", async () => {
+        if (confirm(`Delete Feature #${oid} (${name})?`)) {
+          const delGraphic = new Graphic({ attributes: { [oidField]: oid } });
+          await applyEditsToLayer({ deleteFeatures: [delGraphic] });
+        }
+      });
+
+      tableBody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error("[Editor] Failed to query features:", err);
+    tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:16px;color:#ef4444;">Failed to load: ${err.message}</td></tr>`;
+  }
+}
+
+/**
+ * Select a feature by objectId for editing (used from table)
+ */
+async function selectFeatureById(objectId) {
+  clearEditor();
+
+  const featureSet = await featureLayer.queryFeatures({
+    objectIds: [objectId],
+    outFields: ["*"],
+    returnGeometry: true
+  });
+
+  if (featureSet.features.length > 0) {
+    editFeature = featureSet.features[0];
+    featureForm.feature = editFeature;
+
+    const layerView = await viewInstance.whenLayerView(featureLayer);
+    highlight = layerView.highlight(editFeature);
+
+    const editGraphic = editFeature.clone();
+    sketchLayer.add(editGraphic);
+    sketchVM.update([editGraphic], { tool: "reshape" });
+
+    document.getElementById("updateHeader").innerText = `Update Feature #${objectId}`;
+    toggleEditingDivs(false);
+    setEditorStatus(`Editing Feature #${objectId}`);
+
+    // Zoom to it
+    viewInstance.goTo({ target: editFeature.geometry, zoom: 16 });
+  }
+}
+
+// ==========================================
+// HELPERS
+// ==========================================
+
+function clearEditor() {
+  if (highlight) { highlight.remove(); highlight = null; }
+  sketchLayer.removeAll();
+  if (sketchVM && sketchVM.state === "active") sketchVM.cancel();
+  editFeature = null;
+  isAddingNew = false;
+  if (featureForm) featureForm.feature = null;
+  toggleEditingDivs(true);
+  toggleCancelButtons(false);
+}
+
+function toggleCancelButtons(isDrawing) {
+  const btnCancelHeader = document.getElementById("btn-cancel-add-feature");
+  const bannerPanel = document.getElementById("drawing-active-banner");
+  const btnCancelPill = document.getElementById("btn-cancel-drawing-pill");
+
+  if (btnCancelHeader) btnCancelHeader.style.display = isDrawing ? "inline-flex" : "none";
+  if (bannerPanel) bannerPanel.style.display = isDrawing ? "block" : "none";
+  if (btnCancelPill) btnCancelPill.style.display = isDrawing ? "inline-block" : "none";
+}
+
+function toggleEditingDivs(showAdd) {
+  const addDiv = document.getElementById("addFeatureDiv");
+  const updateDiv = document.getElementById("featureUpdateDiv");
+  const instructionDiv = document.getElementById("updateInstructionDiv");
+
+  if (addDiv) addDiv.style.display = showAdd ? "block" : "none";
+  if (updateDiv) updateDiv.style.display = showAdd ? "none" : "block";
+  if (instructionDiv) instructionDiv.style.display = showAdd ? "block" : "none";
+}
+
+function setEditorStatus(text) {
+  const el = document.getElementById("editor-status-text");
+  if (el) el.textContent = text;
+}
+
+function setupGlobalHelpers() {
+  window.mapView = viewInstance;
+
+  window.zoomToAll = function () {
+    const egyptExtent = new Extent({
+      xmin: 25.0, ymin: 22.0, xmax: 36.0, ymax: 32.0,
+      spatialReference: { wkid: 4326 }
+    });
+    if (viewInstance) viewInstance.goTo(egyptExtent);
+  };
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+export function showToast(message, type = "info") {
+  const container = document.getElementById("toast-container");
+  if (!container) return;
+
+  const toast = document.createElement("div");
+  toast.className = `toast-item toast-${type}`;
+  toast.innerHTML = `
+    <div class="toast-content">
+      <span class="toast-icon">${type === "success" ? "✓" : type === "error" ? "✕" : type === "warning" ? "⚠" : "ℹ"}</span>
+      <span class="toast-text">${escapeHtml(message)}</span>
+    </div>
+    <button type="button" class="toast-close">&times;</button>`;
+
+  toast.querySelector(".toast-close").addEventListener("click", () => toast.remove());
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    if (toast.parentElement) {
+      toast.classList.add("fade-out");
+      setTimeout(() => toast.remove(), 300);
+    }
+  }, 4500);
+}

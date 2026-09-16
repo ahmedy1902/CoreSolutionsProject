@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="ArcGIS Maps SDK for JavaScript GIS Enterprise Viewer - Technical Assessment with Custom applyEdits Feature Editor." />
+  <meta name="author" content="Ahmed" />
+  <title>ArcGIS Enterprise GIS Viewer | Technical Assessment</title>
+
+  <!-- ArcGIS Maps SDK for JavaScript v5.1 CSS -->
+  <link rel="stylesheet" href="https://js.arcgis.com/5.1/@arcgis/core/assets/esri/themes/dark/main.css" />
+
+  <!-- Application Stylesheets -->
+  <link rel="stylesheet" href="css/style.css?v=5.2" />
+  <link rel="stylesheet" href="css/editor.css?v=5.2" />
+</head>
+<body>
+  <div id="app-container">
+    <!-- Header Bar -->
+    <header class="app-header" role="banner">
+      <div class="header-brand">
+        <div class="brand-icon" aria-hidden="true">GIS</div>
+        <div class="brand-info">
+          <h1 class="app-title" id="app-main-heading">
+            <span class="title-long">ArcGIS Enterprise Viewer</span>
+            <span class="badge-tag">Assessment</span>
+          </h1>
+          <span class="map-title-sub" id="app-map-title">Loading Web Map...</span>
+        </div>
+      </div>
+
+      <!-- Quick Action Tools -->
+      <div class="header-center-tools">
+        <span class="status-pill" id="layer-status-badge">Connecting...</span>
+        <button type="button" class="btn btn-primary" id="btn-start-add-feature" title="Draw and add a new polygon feature">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+          Add Feature
+        </button>
+        <button type="button" class="btn btn-secondary" id="btn-cancel-add-feature" style="display:none; background-color:#ef4444; border-color:#ef4444; color:#ffffff;" title="Cancel drawing feature">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          Cancel Add
+        </button>
+        <button type="button" class="btn btn-secondary" id="btn-toggle-features-drawer" title="Open feature data table">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          Layer Data
+          <span class="count-badge" id="features-count-badge">0</span>
+        </button>
+      </div>
+
+      <!-- Header Utilities -->
+      <div class="header-actions">
+        <button type="button" class="btn-icon" id="btn-show-about" title="View Assessment Info">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        </button>
+        <button type="button" class="btn-icon" id="btn-toggle-theme" title="Toggle Theme">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Custom Editor Panel (used by Expand widget, hidden initially) -->
+    <div id="editArea" class="editArea-container esri-widget--panel" style="display:none;">
+      <div id="addFeatureDiv" style="display:block;">
+        <h3 class="list-heading">Manage Features</h3>
+        <div id="drawing-active-banner" style="display:none; background:rgba(239,68,68,0.12); border:1px solid #ef4444; border-radius:6px; padding:10px; margin-bottom:12px; text-align:center;">
+          <p style="margin:0 0 6px 0; font-size:13px; font-weight:600; color:#ef4444;">Drawing Polygon in Progress...</p>
+          <button type="button" class="btn btn-secondary" id="btn-cancel-draw-panel" style="background-color:#ef4444; border-color:#ef4444; color:#fff; padding:4px 14px; font-size:12px; cursor:pointer; width:100%;">
+            Cancel Drawing
+          </button>
+        </div>
+        <ul style="font-size:13px;padding-left:1.5em;margin-bottom:12px;">
+          <li>Select a template below to draw a new polygon</li>
+          <li>Or click an existing polygon on the map to edit it</li>
+          <li>Update attributes and click <em>Save Changes</em></li>
+        </ul>
+        <div id="addTemplatesDiv" style="background:var(--bg-card,#fff);"></div>
+      </div>
+
+      <div id="featureUpdateDiv" style="display:none;margin-top:1em;">
+        <h4 id="updateHeader" style="margin:0 0 8px 0;">Feature Details</h4>
+        <div id="formDiv"></div>
+        <div style="margin-top:12px;display:flex;gap:8px;">
+          <input type="button" class="esri-button" value="Save Changes" id="btnUpdate" style="background-color:#22c55e;border-color:#22c55e;" />
+          <input type="button" class="esri-button esri-button--secondary" value="Cancel" id="btnCancel" />
+        </div>
+        <br/>
+        <input type="button" class="esri-button esri-button--tertiary" value="Delete Feature" id="btnDelete" style="color:#ef4444;border-color:#ef4444;" />
+      </div>
+
+      <div id="updateInstructionDiv" style="text-align:center;display:block;">
+        <p class="or-wrap" style="background:#e0e0e0;height:1px;margin:2em 0;overflow:visible;">
+          <span class="or-text" style="background:var(--bg-card,#fff);line-height:0;padding:0 1em;position:relative;bottom:0.75em;">Or</span>
+        </p>
+        <p>Select an existing polygon on the map to edit or delete.</p>
+      </div>
+    </div>
+
+    <!-- Map Viewport -->
+    <main id="viewDiv" role="region" aria-label="ArcGIS Interactive Map"></main>
+
+    <!-- Floating Status Pill -->
+    <div class="map-status-pill" id="map-status-pill">
+      <div class="pulse-dot"></div>
+      <span id="editor-status-text">Ready</span>
+      <button type="button" id="btn-cancel-drawing-pill" style="display:none; margin-left:8px; background:#ef4444; color:#ffffff; border:none; padding:3px 10px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer;" title="Cancel drawing polygon">
+        Cancel
+      </button>
+    </div>
+
+    <!-- Features Table Drawer -->
+    <aside class="features-drawer" id="features-drawer">
+      <div class="drawer-header">
+        <h2 class="drawer-title">Operational Features</h2>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button type="button" class="btn-sm-action" id="btn-refresh-features" title="Refresh Table">Refresh</button>
+          <button type="button" class="btn-icon" id="btn-close-drawer" title="Close Drawer">&times;</button>
+        </div>
+      </div>
+      <div class="drawer-body">
+        <p class="form-hint" style="margin-bottom: 12px;">
+          Manage features in <strong>Sample_Layer</strong> using <code>applyEdits</code>.
+        </p>
+        <div class="features-table-container">
+          <table class="features-table">
+            <thead>
+              <tr><th>ID</th><th>Full Name</th><th>Email</th><th>Input Date</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="features-table-body">
+              <tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-muted);">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Modal: Add Feature -->
+    <div class="modal-backdrop" id="modal-add-feature">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3 class="modal-title">Add Feature Attributes</h3>
+          <button type="button" class="modal-close" id="btn-cancel-add">&times;</button>
+        </div>
+        <form id="form-add-feature">
+          <div class="modal-body">
+            <p class="form-hint" style="margin-bottom:16px;">Polygon captured. Enter attributes for <strong>Sample_Layer</strong>:</p>
+            <div class="form-group">
+              <label for="add-full-name">Full Name <span class="required">*</span></label>
+              <input type="text" class="form-control" id="add-full-name" required placeholder="e.g. John Doe" />
+            </div>
+            <div class="form-group">
+              <label for="add-email">Email <span class="required">*</span></label>
+              <input type="email" class="form-control" id="add-email" required placeholder="e.g. john@example.com" />
+            </div>
+            <div class="form-group">
+              <label for="add-input-date">Input Date</label>
+              <input type="datetime-local" class="form-control" id="add-input-date" />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="btn-cancel-add-2">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Feature</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal: Edit Feature -->
+    <div class="modal-backdrop" id="modal-edit-feature">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3 class="modal-title">Edit Feature</h3>
+          <button type="button" class="modal-close" id="btn-cancel-edit">&times;</button>
+        </div>
+        <form id="form-edit-feature">
+          <div class="modal-body">
+            <div class="geometry-action-box">
+              <div class="geometry-info-text">
+                <strong>Polygon Geometry</strong>
+                <div id="edit-area-display" class="form-hint">Calculated on server</div>
+              </div>
+              <button type="button" class="btn-sm-action" id="btn-toggle-reshape">Reshape Geometry</button>
+            </div>
+            <div class="form-group">
+              <label for="edit-object-id">Feature ID</label>
+              <input type="text" class="form-control" id="edit-object-id" readonly />
+            </div>
+            <div class="form-group">
+              <label for="edit-full-name">Full Name <span class="required">*</span></label>
+              <input type="text" class="form-control" id="edit-full-name" required />
+            </div>
+            <div class="form-group">
+              <label for="edit-email">Email <span class="required">*</span></label>
+              <input type="email" class="form-control" id="edit-email" required />
+            </div>
+            <div class="form-group">
+              <label for="edit-input-date">Input Date</label>
+              <input type="datetime-local" class="form-control" id="edit-input-date" />
+            </div>
+          </div>
+          <div class="modal-footer" style="justify-content: space-between;">
+            <button type="button" class="btn btn-danger" id="btn-delete-current-feature">Delete Feature</button>
+            <div style="display:flex;gap:8px;">
+              <button type="button" class="btn btn-secondary" id="btn-cancel-edit-2">Close</button>
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal: Delete Confirmation -->
+    <div class="modal-backdrop" id="modal-delete-confirm">
+      <div class="modal-card" style="max-width: 420px;">
+        <div class="modal-header">
+          <h3 class="modal-title" style="color:var(--accent-danger)">Confirm Deletion</h3>
+          <button type="button" class="modal-close" id="btn-cancel-delete">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p id="delete-confirm-text">Are you sure you want to permanently delete this feature?</p>
+          <p class="form-hint" style="color:var(--accent-danger);margin-top:8px;">
+            This calls <code>featureLayer.applyEdits({ deleteFeatures })</code>.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-delete-2">Cancel</button>
+          <button type="button" class="btn btn-danger" id="btn-confirm-delete">Confirm Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: About -->
+    <div class="modal-backdrop" id="modal-about">
+      <div class="modal-card modal-lg">
+        <div class="modal-header">
+          <h3 class="modal-title">Technical Assessment Overview</h3>
+          <button type="button" class="modal-close" id="btn-close-about">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p style="font-size:0.88rem;color:var(--text-secondary);margin-bottom:12px;">
+            Built with <strong>ArcGIS Maps SDK for JavaScript v5.1 (ESM)</strong>.
+          </p>
+          <div class="about-grid">
+            <div class="about-card">
+              <h4>Mandatory (100%)</h4>
+              <ul>
+                <li>2D MapView consuming WebMap</li>
+                <li>OAuth 2.0 Client Credentials Auth</li>
+                <li>Search Widget for layer features</li>
+                <li>Custom applyEdits Editor (CRUD)</li>
+                <li>LayerList with legend toggles</li>
+                <li>Legend Widget</li>
+                <li>BasemapGallery</li>
+                <li>Home, Zoom, ScaleBar</li>
+                <li>Default Popups</li>
+              </ul>
+            </div>
+            <div class="about-card">
+              <h4>Bonus (100%)</h4>
+              <ul>
+                <li>Print Widget (PDF Export)</li>
+                <li>Interactive Measurement</li>
+                <li>Sketch on GraphicsLayer</li>
+                <li>Compass &amp; Locate</li>
+                <li>Fullscreen</li>
+                <li>Responsive layout</li>
+                <li>Features Data Table</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" id="btn-close-about-2">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="app-loading-overlay">
+      <div class="spinner"></div>
+      <div class="loading-status-text" id="loading-status-text">Loading ArcGIS Maps SDK v5.1...</div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" aria-live="polite"></div>
+  </div>
+
+  <!-- Main Application Entry Point (ES Module) -->
+  <script type="module" src="js/app.js?v=5.2"></script>
+</body>
+</html>
