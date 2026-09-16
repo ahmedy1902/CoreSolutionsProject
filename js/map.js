@@ -214,12 +214,22 @@ function createSampleFeatureLayer() {
 }
 
 function findOperationalLayer(mapInst, targetTitle) {
-  let layer = mapInst.layers.find(l => l.title === targetTitle);
+  let layer = null;
+  if (targetTitle) {
+    layer = mapInst.layers.find(l => l.title === targetTitle);
+    if (!layer && mapInst.allLayers) {
+      layer = mapInst.allLayers.find(l =>
+        l.title === targetTitle ||
+        (l.url && l.url.toLowerCase().includes(targetTitle.toLowerCase()))
+      );
+    }
+  }
+  // Auto-detect: if no matching title found, find the first FeatureLayer in the WebMap
   if (!layer && mapInst.allLayers) {
-    layer = mapInst.allLayers.find(l =>
-      l.title === targetTitle ||
-      (l.url && l.url.toLowerCase().includes("sample_layer"))
-    );
+    layer = mapInst.allLayers.find(l => l.type === "feature");
+  }
+  if (!layer && mapInst.layers) {
+    layer = mapInst.layers.find(l => l.type === "feature");
   }
   return layer;
 }

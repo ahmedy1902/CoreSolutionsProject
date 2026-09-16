@@ -98,13 +98,11 @@ function openConfigModal() {
   const inputWebMap = document.getElementById("config-webmap-id");
   const inputClientId = document.getElementById("config-client-id");
   const inputSecret = document.getElementById("config-client-secret");
-  const inputLayerTitle = document.getElementById("config-layer-title");
 
   if (inputPortal) inputPortal.value = APP_CONFIG.portalUrl || "https://www.arcgis.com";
   if (inputWebMap) inputWebMap.value = APP_CONFIG.webMapId || "16ffde90eb6e4432ba2b81da63637ba0";
   if (inputClientId) inputClientId.value = APP_CONFIG.clientId || "";
   if (inputSecret) inputSecret.value = APP_CONFIG.clientSecret || "";
-  if (inputLayerTitle) inputLayerTitle.value = APP_CONFIG.operationalLayerTitle || "Sample_Layer";
 
   modal.classList.add("active");
 }
@@ -189,7 +187,6 @@ function setupConnectionModal() {
       const webMapId = (document.getElementById("config-webmap-id")?.value || "").trim() || "16ffde90eb6e4432ba2b81da63637ba0";
       const clientId = (document.getElementById("config-client-id")?.value || "").trim();
       const clientSecret = (document.getElementById("config-client-secret")?.value || "").trim();
-      const layerTitle = (document.getElementById("config-layer-title")?.value || "").trim() || "Sample_Layer";
       const remember = document.getElementById("config-remember")?.checked !== false;
 
       if (!clientId || !clientSecret) {
@@ -203,7 +200,7 @@ function setupConnectionModal() {
         webMapId,
         clientId,
         clientSecret,
-        operationalLayerTitle: layerTitle
+        operationalLayerTitle: APP_CONFIG.operationalLayerTitle || "Sample_Layer"
       }, remember);
 
       closeConfigModal();
