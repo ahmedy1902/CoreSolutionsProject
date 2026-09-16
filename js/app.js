@@ -6,10 +6,14 @@
  */
 
 // Import application modules
+import { APP_CONFIG, isConfigReady, saveConfig, clearConfig } from "./config.js?v=5.2";
 import { initAuth, isStandalone } from "./auth.js?v=5.2";
 import { initMap } from "./map.js?v=5.2";
 import { initWidgets } from "./widgets.js?v=5.2";
 import { init as initEditor, refreshFeaturesList, showToast } from "./customEditor.js?v=5.2";
+
+let connectionPromptResolver = null;
+let isInitialPrompt = false;
 
 // ==========================================
 // Application Bootstrap
@@ -23,6 +27,16 @@ import { init as initEditor, refreshFeaturesList, showToast } from "./customEdit
     banner.style.cssText = "position:fixed;top:0;left:0;width:100%;background:#dc2626;color:#ffffff;text-align:center;padding:12px 16px;z-index:999999;font-weight:600;font-family:sans-serif;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.4);line-height:1.5;";
     banner.innerHTML = "⚠️ Note: You opened this file directly via <code>file:///</code> protocol. Modern browsers block ArcGIS token/CORS requests on local files. Please open via your local server: <a href='http://localhost:8085' style='color:#ffffff;text-decoration:underline;font-weight:bold;margin-left:8px;background:rgba(0,0,0,0.25);padding:3px 8px;border-radius:4px;'>http://localhost:8085</a>";
     document.body.prepend(banner);
+  }
+
+  // Setup connection modal and layout controls early
+  setupConnectionModal();
+  setupLayoutControls();
+
+  // If credentials are not configured, prompt the user first
+  if (!isConfigReady()) {
+    updateLoadingState(false);
+    await promptForConnection();
   }
 
   try {
@@ -51,12 +65,9 @@ import { init as initEditor, refreshFeaturesList, showToast } from "./customEdit
     console.info("[App] Step 4/4: Initializing custom feature editor...");
     await initEditor(mapContext);
 
-    // Step 5: Wire up layout controls & drawers
-    setupLayoutControls();
-
     console.info("[App] ArcGIS GIS Viewer Application successfully initialized!");
     const modeNotice = isStandalone()
-      ? "Ready (Standalone Mode)"
+      ? "Ready (Standalone Demo Mode)"
       : "Ready (Connected to ArcGIS Online Web Map)";
     showToast(modeNotice, "success");
 
@@ -65,6 +76,148 @@ import { init as initEditor, refreshFeaturesList, showToast } from "./customEdit
     showFatalError(err.message || String(err));
   }
 })();
+
+// ==========================================
+// Connection Configuration Modal Handling
+// ==========================================
+
+function promptForConnection() {
+  return new Promise((resolve) => {
+    connectionPromptResolver = resolve;
+    isInitialPrompt = true;
+    openConfigModal();
+  });
+}
+
+function openConfigModal() {
+  const modal = document.getElementById("modal-connection-config");
+  if (!modal) return;
+
+  // Pre-fill inputs with current APP_CONFIG values
+  const inputPortal = document.getElementById("config-portal-url");
+  const inputWebMap = document.getElementById("config-webmap-id");
+  const inputClientId = document.getElementById("config-client-id");
+  const inputSecret = document.getElementById("config-client-secret");
+  const inputLayerTitle = document.getElementById("config-layer-title");
+
+  if (inputPortal) inputPortal.value = APP_CONFIG.portalUrl || "https://www.arcgis.com";
+  if (inputWebMap) inputWebMap.value = APP_CONFIG.webMapId || "16ffde90eb6e4432ba2b81da63637ba0";
+  if (inputClientId) inputClientId.value = APP_CONFIG.clientId || "";
+  if (inputSecret) inputSecret.value = APP_CONFIG.clientSecret || "";
+  if (inputLayerTitle) inputLayerTitle.value = APP_CONFIG.operationalLayerTitle || "Sample_Layer";
+
+  modal.classList.add("active");
+}
+
+function closeConfigModal() {
+  const modal = document.getElementById("modal-connection-config");
+  if (modal) modal.classList.remove("active");
+}
+
+function setupConnectionModal() {
+  const modal = document.getElementById("modal-connection-config");
+  const btnShowConnection = document.getElementById("btn-show-connection");
+  const btnCloseConfig = document.getElementById("btn-close-config");
+  const btnSaveConfig = document.getElementById("btn-save-config");
+  const btnLaunchStandalone = document.getElementById("btn-launch-standalone");
+  const btnClearConfig = document.getElementById("btn-clear-config");
+  const btnToggleSecret = document.getElementById("btn-toggle-secret-visibility");
+  const inputSecret = document.getElementById("config-client-secret");
+  const layerBadge = document.getElementById("layer-status-badge");
+
+  if (btnShowConnection) {
+    btnShowConnection.addEventListener("click", () => {
+      isInitialPrompt = false;
+      openConfigModal();
+    });
+  }
+
+  if (layerBadge) {
+    layerBadge.style.cursor = "pointer";
+    layerBadge.title = "Click to configure connection settings";
+    layerBadge.addEventListener("click", () => {
+      isInitialPrompt = false;
+      openConfigModal();
+    });
+  }
+
+  if (btnCloseConfig) {
+    btnCloseConfig.addEventListener("click", () => {
+      closeConfigModal();
+      if (isInitialPrompt && connectionPromptResolver) {
+        // Default to standalone so app doesn't hang
+        saveConfig({ mode: "standalone" }, false);
+        const resolver = connectionPromptResolver;
+        connectionPromptResolver = null;
+        resolver();
+      }
+    });
+  }
+
+  if (btnToggleSecret && inputSecret) {
+    btnToggleSecret.addEventListener("click", () => {
+      inputSecret.type = inputSecret.type === "password" ? "text" : "password";
+    });
+  }
+
+  if (btnClearConfig) {
+    btnClearConfig.addEventListener("click", () => {
+      clearConfig();
+      if (document.getElementById("config-client-id")) document.getElementById("config-client-id").value = "";
+      if (inputSecret) inputSecret.value = "";
+      showToast("Saved credentials cleared from browser storage", "info");
+    });
+  }
+
+  if (btnLaunchStandalone) {
+    btnLaunchStandalone.addEventListener("click", () => {
+      saveConfig({ mode: "standalone" }, false);
+      closeConfigModal();
+      if (isInitialPrompt && connectionPromptResolver) {
+        const resolver = connectionPromptResolver;
+        connectionPromptResolver = null;
+        resolver();
+      } else {
+        window.location.reload();
+      }
+    });
+  }
+
+  if (btnSaveConfig) {
+    btnSaveConfig.addEventListener("click", () => {
+      const portalUrl = (document.getElementById("config-portal-url")?.value || "").trim() || "https://www.arcgis.com";
+      const webMapId = (document.getElementById("config-webmap-id")?.value || "").trim() || "16ffde90eb6e4432ba2b81da63637ba0";
+      const clientId = (document.getElementById("config-client-id")?.value || "").trim();
+      const clientSecret = (document.getElementById("config-client-secret")?.value || "").trim();
+      const layerTitle = (document.getElementById("config-layer-title")?.value || "").trim() || "Sample_Layer";
+      const remember = document.getElementById("config-remember")?.checked !== false;
+
+      if (!clientId || !clientSecret) {
+        alert("Please enter both Client ID and Client Secret, or select 'Launch Standalone Demo'.");
+        return;
+      }
+
+      saveConfig({
+        mode: "arcgis-online",
+        portalUrl,
+        webMapId,
+        clientId,
+        clientSecret,
+        operationalLayerTitle: layerTitle
+      }, remember);
+
+      closeConfigModal();
+
+      if (isInitialPrompt && connectionPromptResolver) {
+        const resolver = connectionPromptResolver;
+        connectionPromptResolver = null;
+        resolver();
+      } else {
+        window.location.reload();
+      }
+    });
+  }
+}
 
 // ==========================================
 // UI Helpers
@@ -100,9 +253,20 @@ function showFatalError(errMsg) {
         <h2>Application Error</h2>
         <p>Failed to initialize the ArcGIS Web Application.</p>
         <div class="error-detail">${errMsg}</div>
-        <button class="btn btn-primary mt-3" onclick="window.location.reload()">Retry</button>
+        <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;">
+          <button class="btn btn-secondary" onclick="window.location.reload()">Retry</button>
+          <button class="btn btn-primary" id="btn-fatal-change-config">Change Connection Settings</button>
+        </div>
       </div>
     `;
+
+    const btnFatalConfig = document.getElementById("btn-fatal-change-config");
+    if (btnFatalConfig) {
+      btnFatalConfig.addEventListener("click", () => {
+        overlay.classList.add("hidden");
+        openConfigModal();
+      });
+    }
   }
 }
 
@@ -117,7 +281,7 @@ function updateHeaderInfo(mapInstance, layer) {
 
   const layerBadge = document.getElementById("layer-status-badge");
   if (layerBadge && layer) {
-    const modeText = isStandalone() ? "Standalone" : "ArcGIS Online";
+    const modeText = isStandalone() ? "Standalone Demo" : "ArcGIS Online";
     layerBadge.textContent = `${layer.title || "Sample_Layer"} (${modeText})`;
     layerBadge.classList.add("badge-active");
   }

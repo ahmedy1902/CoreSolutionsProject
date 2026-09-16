@@ -1,1 +1,2 @@
-js/config.js
+# Local configuration with private credentials
+js/config.local.js

@@ -6,8 +6,13 @@ A single-page Web GIS viewer built with the **ArcGIS Maps SDK for JavaScript v5.
 
 ## 🔗 Live Demo & Repository
 
-- **Live deployed link**: `<add GitHub Pages / hosting URL here>`
+- **Live deployed link**: `https://ahmedy1902.github.io/CoreSolutionsProject/`
 - **Source code repository**: `https://github.com/ahmedy1902/CoreSolutionsProject`
+
+> **Note for Evaluators on GitHub Pages**:
+> To protect sensitive OAuth credentials from public repository exposure, the live deployment features a secure browser-level credential manager:
+> - **ArcGIS Online Mode**: Enter your assessment Client ID & Secret in the prompt dialog (stored only in your local browser session/storage).
+> - **Standalone Demo Mode**: Click **"Launch Standalone Demo"** to immediately test all widgets, editing workflows, and data table on an in-memory feature layer without needing credentials.
 
 ---
 
