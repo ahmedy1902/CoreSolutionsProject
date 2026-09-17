@@ -85,16 +85,15 @@ No `npm install` or compilation is required. Any modern browser (Chrome, Edge, F
 | **Mandatory** | **Home Widget** | `<arcgis-home>` component resetting map view to initial extent. | `index.html` |
 | **Mandatory** | **Zoom Widget** | `<arcgis-zoom>` component with explicit zoom-in and zoom-out buttons. | `index.html` |
 | **Mandatory** | **ScaleBar Widget** | `<arcgis-scale-bar>` component with dual metric and imperial scale units. | `index.html` |
-| **Bonus** | **2D Area Measurement** | Interactive `AreaMeasurement2D` widget inside `Expand`. Auto-activates on open and clears on collapse. | `js/widgets.js` |
-| **Bonus** | **2D Distance Measurement** | Interactive `DistanceMeasurement2D` widget inside `Expand`. Auto-activates on open and clears on collapse. | `js/widgets.js` |
-| **Bonus** | **Print / Export to PDF** | `<arcgis-print>` Web Component inside `<arcgis-expand>`. Automatically hides the private operational layer (`operationalLayer.visible = false`) while the print panel is expanded to prevent unauthenticated server errors with the public sample print service, and restores it on panel collapse. | `index.html` & `js/widgets.js` |
-| **Bonus** | **Interactive Sketch** | Allows freehand drawing of custom graphics (points, polylines, polygons, rectangles, circles) on a dedicated graphics layer. | `js/widgets.js` |
-| **Bonus** | **Locate Widget** | Geolocates and tracks user's current GPS location on the map. | `js/widgets.js` |
-| **Bonus** | **Compass Widget** | Displays map orientation and resets heading to North on click. | `js/widgets.js` |
-| **Bonus** | **Fullscreen Widget** | `<arcgis-fullscreen>` component toggling browser fullscreen mode. | `index.html` |
-| **Bonus** | **Operational Data Table** | Collapsible bottom drawer displaying all layer features in an interactive table with Zoom, Edit, and Delete actions. | `index.html` & `js/customEditor.js` |
-| **Bonus** | **OAuth 2.0 Authentication** | Authenticates against ArcGIS Online via OAuth 2.0 Client Credentials flow (`client_credentials`), registering tokens into both the JS API and Web Component `IdentityManager`. | `js/auth.js` & `js/config.js` |
-| **Bonus** | **Dynamic Dark / Light Theme** | Synchronized theme switcher toggling Calcite UI modes (`calcite-mode-dark` / `calcite-mode-light`), Esri SDK theme stylesheets (`dark/main.css` / `light/main.css`), and customized CSS variables with optimal contrast. | `js/app.js` & `css/editor.css` |
+| **Bonus (Brief)** | **2D Area Measurement** | Interactive `AreaMeasurement2D` widget inside `Expand`. Auto-activates on open and clears on collapse. | `js/widgets.js` |
+| **Bonus (Brief)** | **2D Distance Measurement** | Interactive `DistanceMeasurement2D` widget inside `Expand`. Auto-activates on open and clears on collapse. | `js/widgets.js` |
+| **Bonus (Brief)** | **Print / Export to PDF** | `<arcgis-print>` Web Component inside `<arcgis-expand>`. Automatically hides the private operational layer (`operationalLayer.visible = false`) while the print panel is expanded to prevent unauthenticated server errors with the public sample print service, and restores it on panel collapse. | `index.html` & `js/widgets.js` |
+| **Bonus (Brief)** | **Interactive Sketch** | Allows freehand drawing of custom graphics (points, polylines, polygons, rectangles, circles) on a dedicated graphics layer. | `js/widgets.js` |
+| **Bonus (Brief)** | **Compass & Locate** | Geolocates current GPS location (`<arcgis-locate>`) and map rotation / reset heading to North (`Compass`). | `index.html` & `js/widgets.js` |
+| **Bonus (Brief)** | **Fullscreen Widget** | `<arcgis-fullscreen>` component toggling browser fullscreen mode. | `index.html` |
+| **Candidate Addition** | **Operational Data Table** | Interactive bottom drawer displaying all layer features in a responsive table with quick Zoom, Edit, and Delete actions. | `index.html` & `js/customEditor.js` |
+| **Candidate Addition** | **OAuth 2.0 Credential Manager** | In-browser modal for secure OAuth 2.0 Client Credentials authentication, preventing sensitive secret leaks in public Git repositories and supporting dual `IdentityManager` registration. | `js/auth.js` & `js/config.js` |
+| **Candidate Addition** | **Dynamic Dark / Light Theme** | Synchronized theme switcher toggling Calcite UI modes (`calcite-mode-dark` / `calcite-mode-light`), Esri SDK theme stylesheets (`dark/main.css` / `light/main.css`), and customized CSS variables with WCAG contrast. | `js/app.js` & `css/editor.css` |
 
 ---
 
@@ -137,7 +136,7 @@ No `npm install` or compilation is required. Any modern browser (Chrome, Edge, F
 
 - **Additional Future Enhancements**:
   - Add spatial and attribute query filtering (e.g. filter features by drawn bounding box or attribute query expressions).
-  - Add offline caching using Service Workers and IndexedDB for disconnected workflows.
+
 
 ---
 
@@ -153,4 +152,4 @@ No `npm install` or compilation is required. Any modern browser (Chrome, Edge, F
 - **LayerList & Legend**: [Esri Sample - LayerList & Legend](https://developers.arcgis.com/javascript/latest/sample-code/widgets-layerlist-legend/)
 - **BasemapGallery**: [Esri Sample - Basemap Gallery](https://developers.arcgis.com/javascript/latest/sample-code/basemap-gallery/)
 - **Locate Widget**: [Esri Sample - Locate Widget](https://developers.arcgis.com/javascript/latest/sample-code/locate/)
-- **Fullscreen Component**: [Esri Reference - arcgis-fullscreen](https://developers.arcgis.com/javascript/latest/references/map-components/components/arcgis-fullscreen/)
+- **Fullscreen Component**: [Esri Reference - arcgis-fullscreen](https://developers.arcgis.com/javascript/latest/references/map-components/components/arcgis-fullscreen/)
