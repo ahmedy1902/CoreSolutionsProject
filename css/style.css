@@ -115,13 +115,20 @@ html, body {
   display: flex;
   flex-direction: column;
   width: 100vw;
+  /* Use dvh (dynamic viewport height) so the header stays below browser chrome;
+     fall back to vh for older browsers */
   height: 100vh;
+  height: 100dvh;
   position: relative;
+  overflow: hidden;
 }
 
 /* Header */
 .app-header {
+  /* Never let the header collapse — always stays above the map */
+  flex-shrink: 0;
   height: var(--header-height);
+  min-height: var(--header-height);
   background: var(--bg-panel);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -132,6 +139,13 @@ html, body {
   padding: 0 16px;
   z-index: 20;
   box-shadow: var(--shadow-sm);
+}
+
+/* Map fills remaining space below the header */
+arcgis-map {
+  flex: 1 1 auto;
+  min-height: 0;   /* critical: prevents flex child from overflowing */
+  width: 100%;
 }
 
 .header-brand {
@@ -553,10 +567,7 @@ body.light-theme .esri-widget {
   .app-header {
     padding: 0 8px;
     height: 46px;
-  }
-
-  :root {
-    --header-height: 46px;
+    min-height: 46px;
   }
 
   .header-brand .map-title-sub,
