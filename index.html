@@ -7,14 +7,17 @@
   <meta name="author" content="Ahmed" />
   <title>ArcGIS Enterprise GIS Viewer | Technical Assessment</title>
 
-  <!-- ArcGIS Maps SDK for JavaScript v5.1 CSS -->
-  <link rel="stylesheet" href="https://js.arcgis.com/5.1/@arcgis/core/assets/esri/themes/dark/main.css" />
+  <!-- ArcGIS Maps SDK for JavaScript v5.1 CSS (Theme Swappable) -->
+  <link id="esri-theme-stylesheet" rel="stylesheet" href="https://js.arcgis.com/5.1/@arcgis/core/assets/esri/themes/dark/main.css" />
+
+  <!-- ArcGIS Maps SDK for JavaScript v5.1 Web Components Bundle -->
+  <script type="module" src="https://js.arcgis.com/5.1/"></script>
 
   <!-- Application Stylesheets -->
-  <link rel="stylesheet" href="css/style.css?v=5.2" />
-  <link rel="stylesheet" href="css/editor.css?v=5.2" />
+  <link rel="stylesheet" href="css/style.css?v=5.5" />
+  <link rel="stylesheet" href="css/editor.css?v=5.5" />
 </head>
-<body>
+<body class="calcite-mode-dark">
   <div id="app-container">
     <!-- Header Bar -->
     <header class="app-header" role="banner">
@@ -49,7 +52,7 @@
 
       <!-- Header Utilities -->
       <div class="header-actions">
-        <button type="button" class="btn-icon" id="btn-show-connection" title="ArcGIS Credentials & Connection Settings">
+        <button type="button" class="btn-icon" id="btn-show-connection" title="ArcGIS Credentials &amp; Connection Settings">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
         <button type="button" class="btn-icon" id="btn-show-about" title="View Assessment Info">
@@ -61,45 +64,86 @@
       </div>
     </header>
 
-    <!-- Custom Editor Panel (used by Expand widget, hidden initially) -->
-    <div id="editArea" class="editArea-container esri-widget--panel" style="display:none;">
-      <div id="addFeatureDiv" style="display:block;">
-        <h3 class="list-heading">Manage Features</h3>
-        <div id="drawing-active-banner" style="display:none; background:rgba(239,68,68,0.12); border:1px solid #ef4444; border-radius:6px; padding:10px; margin-bottom:12px; text-align:center;">
-          <p style="margin:0 0 6px 0; font-size:13px; font-weight:600; color:#ef4444;">Drawing Polygon in Progress...</p>
-          <button type="button" class="btn btn-secondary" id="btn-cancel-draw-panel" style="background-color:#ef4444; border-color:#ef4444; color:#fff; padding:4px 14px; font-size:12px; cursor:pointer; width:100%;">
-            Cancel Drawing
-          </button>
+    <!-- Map Viewport with Web Components -->
+    <arcgis-map id="main-map" role="region" aria-label="ArcGIS Interactive Map">
+      <!-- Top Left Tools -->
+      <arcgis-zoom slot="top-left"></arcgis-zoom>
+      <arcgis-home slot="top-left"></arcgis-home>
+      <arcgis-locate slot="top-left"></arcgis-locate>
+      <arcgis-fullscreen slot="top-left"></arcgis-fullscreen>
+
+      <!-- Bottom Left ScaleBar -->
+      <arcgis-scale-bar slot="bottom-left" unit="dual"></arcgis-scale-bar>
+
+      <!-- Top Right Search & Panelled Tools -->
+      <arcgis-search slot="top-right" id="main-search"></arcgis-search>
+
+      <arcgis-expand slot="top-right" group="top-right" expand-tooltip="Layer List">
+        <arcgis-layer-list></arcgis-layer-list>
+      </arcgis-expand>
+
+      <arcgis-expand slot="top-right" group="top-right" expand-tooltip="Map Legend">
+        <arcgis-legend></arcgis-legend>
+      </arcgis-expand>
+
+      <arcgis-expand slot="top-right" group="top-right" expand-tooltip="Basemap Gallery">
+        <arcgis-basemap-gallery></arcgis-basemap-gallery>
+      </arcgis-expand>
+
+      <arcgis-expand slot="top-right" group="top-right" expand-tooltip="Area Measurement" id="area-expand">
+        <arcgis-area-measurement-2d id="area-measurement"></arcgis-area-measurement-2d>
+      </arcgis-expand>
+
+      <arcgis-expand slot="top-right" group="top-right" expand-tooltip="Distance Measurement" id="distance-expand">
+        <arcgis-distance-measurement-2d id="distance-measurement"></arcgis-distance-measurement-2d>
+      </arcgis-expand>
+
+      <arcgis-expand slot="top-right" group="top-right" expand-tooltip="Print Map" id="print-expand">
+        <arcgis-print id="map-print"></arcgis-print>
+      </arcgis-expand>
+
+      <arcgis-expand slot="top-right" group="top-right" expand-tooltip="Sketch Graphics (Bonus)" id="sketch-expand">
+        <arcgis-sketch id="main-sketch"></arcgis-sketch>
+      </arcgis-expand>
+
+      <arcgis-expand slot="top-right" group="top-right" expand-tooltip="Custom Feature Editor" id="editor-expand">
+        <div id="editArea" class="editArea-container esri-widget--panel" style="display:block;">
+          <div id="addFeatureDiv" style="display:block;">
+            <h3 class="list-heading">Manage Features</h3>
+            <div id="drawing-active-banner" style="display:none; background:rgba(239,68,68,0.12); border:1px solid #ef4444; border-radius:6px; padding:10px; margin-bottom:12px; text-align:center;">
+              <p style="margin:0 0 6px 0; font-size:13px; font-weight:600; color:#ef4444;">Drawing Polygon in Progress...</p>
+              <button type="button" class="btn btn-secondary" id="btn-cancel-draw-panel" style="background-color:#ef4444; border-color:#ef4444; color:#fff; padding:4px 14px; font-size:12px; cursor:pointer; width:100%;">
+                Cancel Drawing
+              </button>
+            </div>
+            <ul class="editor-instruction-list">
+              <li>Select a template below to draw a new polygon</li>
+              <li>Or click an existing polygon on the map to edit it</li>
+              <li>Update attributes and click <em>Save Changes</em></li>
+            </ul>
+            <div id="addTemplatesDiv"></div>
+          </div>
+
+          <div id="featureUpdateDiv" style="display:none;margin-top:1em;">
+            <h4 id="updateHeader">Feature Details</h4>
+            <div id="formDiv"></div>
+            <div style="margin-top:12px;display:flex;gap:8px;">
+              <input type="button" class="esri-button" value="Save Changes" id="btnUpdate" style="background-color:#22c55e;border-color:#22c55e;" />
+              <input type="button" class="esri-button esri-button--secondary" value="Cancel" id="btnCancel" />
+            </div>
+            <br/>
+            <input type="button" class="esri-button esri-button--tertiary" value="Delete Feature" id="btnDelete" style="color:#ef4444;border-color:#ef4444;" />
+          </div>
+
+          <div id="updateInstructionDiv" style="text-align:center;display:block;">
+            <p class="or-wrap">
+              <span class="or-text">Or</span>
+            </p>
+            <p class="editor-footer-instruction">Select an existing polygon on the map to edit or delete.</p>
+          </div>
         </div>
-        <ul style="font-size:13px;padding-left:1.5em;margin-bottom:12px;">
-          <li>Select a template below to draw a new polygon</li>
-          <li>Or click an existing polygon on the map to edit it</li>
-          <li>Update attributes and click <em>Save Changes</em></li>
-        </ul>
-        <div id="addTemplatesDiv" style="background:var(--bg-card,#fff);"></div>
-      </div>
-
-      <div id="featureUpdateDiv" style="display:none;margin-top:1em;">
-        <h4 id="updateHeader" style="margin:0 0 8px 0;">Feature Details</h4>
-        <div id="formDiv"></div>
-        <div style="margin-top:12px;display:flex;gap:8px;">
-          <input type="button" class="esri-button" value="Save Changes" id="btnUpdate" style="background-color:#22c55e;border-color:#22c55e;" />
-          <input type="button" class="esri-button esri-button--secondary" value="Cancel" id="btnCancel" />
-        </div>
-        <br/>
-        <input type="button" class="esri-button esri-button--tertiary" value="Delete Feature" id="btnDelete" style="color:#ef4444;border-color:#ef4444;" />
-      </div>
-
-      <div id="updateInstructionDiv" style="text-align:center;display:block;">
-        <p class="or-wrap" style="background:#e0e0e0;height:1px;margin:2em 0;overflow:visible;">
-          <span class="or-text" style="background:var(--bg-card,#fff);line-height:0;padding:0 1em;position:relative;bottom:0.75em;">Or</span>
-        </p>
-        <p>Select an existing polygon on the map to edit or delete.</p>
-      </div>
-    </div>
-
-    <!-- Map Viewport -->
-    <main id="viewDiv" role="region" aria-label="ArcGIS Interactive Map"></main>
+      </arcgis-expand>
+    </arcgis-map>
 
     <!-- Floating Status Pill -->
     <div class="map-status-pill" id="map-status-pill">
@@ -240,7 +284,7 @@
         </div>
         <div class="modal-body">
           <p style="font-size:0.88rem;color:var(--text-secondary);margin-bottom:12px;">
-            Built with <strong>ArcGIS Maps SDK for JavaScript v5.1 (ESM)</strong>.
+            Built with <strong>ArcGIS Maps SDK for JavaScript v5.1 (Web Components)</strong>.
           </p>
           <div class="about-grid">
             <div class="about-card">
@@ -289,31 +333,40 @@
         </div>
         <div class="modal-body">
           <p style="font-size:0.88rem;color:var(--text-secondary);margin-bottom:14px;line-height:1.5;">
-            Connect securely to your private <strong>ArcGIS Online Web Map</strong> using OAuth 2.0 Client Credentials, or launch in <strong>Standalone Mode</strong> for instant evaluation without credentials.
+            Authenticate securely to access the private <strong>ArcGIS Online Web Map</strong> using OAuth 2.0 Client Credentials.
           </p>
 
-          <div class="info-alert" style="background:rgba(0,121,193,0.12);border:1px solid var(--accent-primary);border-radius:var(--radius-md);padding:10px 14px;margin-bottom:16px;font-size:0.82rem;color:var(--text-primary);display:flex;align-items:flex-start;gap:8px;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px;color:var(--accent-primary);"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-            <span><strong>Privacy Notice:</strong> Credentials entered here are stored <em>locally in your browser session</em> and are never pushed to GitHub or shared with any external service.</span>
+          <div class="info-alert" style="background:rgba(0,121,193,0.12);border:1px solid var(--accent-primary);border-radius:var(--radius-md);padding:12px 14px;margin-bottom:16px;font-size:0.82rem;color:var(--text-primary);display:flex;align-items:flex-start;gap:10px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:2px;color:var(--accent-primary);"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+            <div style="flex:1;">
+              <strong>Authentication Required:</strong>
+              <div style="margin-top:4px;font-size:0.8rem;line-height:1.5;color:var(--text-secondary);">
+                Please enter the ArcGIS Online OAuth 2.0 Client Credentials (Client ID &amp; Client Secret) to access the application and operational layer.
+              </div>
+            </div>
           </div>
 
           <form id="form-connection-config" onsubmit="return false;">
-            <input type="hidden" id="config-portal-url" value="https://www.arcgis.com" />
-
-            <div class="form-group" style="margin-bottom:12px;">
-              <label for="config-webmap-id" style="display:block;font-size:0.82rem;font-weight:600;margin-bottom:4px;color:var(--text-secondary);">WebMap Item ID</label>
-              <input type="text" id="config-webmap-id" class="form-control" value="16ffde90eb6e4432ba2b81da63637ba0" required style="width:100%;padding:8px 10px;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius-sm);color:var(--text-primary);font-size:0.85rem;" />
+            <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+              <div class="form-group">
+                <label for="config-portal-url" style="display:block;font-size:0.82rem;font-weight:600;margin-bottom:4px;color:var(--text-secondary);">Portal / Org URL <span class="required" style="color:var(--accent-danger);">*</span></label>
+                <input type="url" id="config-portal-url" class="form-control" value="https://www.arcgis.com" required placeholder="https://www.arcgis.com" style="width:100%;padding:8px 10px;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius-sm);color:var(--text-primary);font-size:0.85rem;" />
+              </div>
+              <div class="form-group">
+                <label for="config-webmap-id" style="display:block;font-size:0.82rem;font-weight:600;margin-bottom:4px;color:var(--text-secondary);">WebMap Item ID <span class="required" style="color:var(--accent-danger);">*</span></label>
+                <input type="text" id="config-webmap-id" class="form-control" value="16ffde90eb6e4432ba2b81da63637ba0" required placeholder="WebMap Item ID" style="width:100%;padding:8px 10px;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius-sm);color:var(--text-primary);font-size:0.85rem;" />
+              </div>
             </div>
 
             <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
               <div class="form-group">
-                <label for="config-client-id" style="display:block;font-size:0.82rem;font-weight:600;margin-bottom:4px;color:var(--text-secondary);">OAuth Client ID</label>
-                <input type="text" id="config-client-id" class="form-control" placeholder="e.g. XykVHoED..." autocomplete="off" style="width:100%;padding:8px 10px;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius-sm);color:var(--text-primary);font-size:0.85rem;" />
+                <label for="config-client-id" style="display:block;font-size:0.82rem;font-weight:600;margin-bottom:4px;color:var(--text-secondary);">OAuth Client ID <span class="required" style="color:var(--accent-danger);">*</span></label>
+                <input type="text" id="config-client-id" class="form-control" placeholder="Enter Client ID" autocomplete="off" required style="width:100%;padding:8px 10px;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius-sm);color:var(--text-primary);font-size:0.85rem;" />
               </div>
               <div class="form-group">
-                <label for="config-client-secret" style="display:block;font-size:0.82rem;font-weight:600;margin-bottom:4px;color:var(--text-secondary);">OAuth Client Secret (Password)</label>
+                <label for="config-client-secret" style="display:block;font-size:0.82rem;font-weight:600;margin-bottom:4px;color:var(--text-secondary);">OAuth Client Secret <span class="required" style="color:var(--accent-danger);">*</span></label>
                 <div style="position:relative;display:flex;align-items:center;">
-                  <input type="password" id="config-client-secret" class="form-control" placeholder="e.g. 12fd329e..." autocomplete="off" style="width:100%;padding:8px 36px 8px 10px;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius-sm);color:var(--text-primary);font-size:0.85rem;" />
+                  <input type="password" id="config-client-secret" class="form-control" placeholder="Enter Client Secret" autocomplete="off" required style="width:100%;padding:8px 36px 8px 10px;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius-sm);color:var(--text-primary);font-size:0.85rem;" />
                   <button type="button" id="btn-toggle-secret-visibility" style="position:absolute;right:8px;background:none;border:none;cursor:pointer;color:var(--text-muted);padding:4px;font-size:14px;" title="Toggle Secret Visibility">👁️</button>
                 </div>
               </div>
@@ -331,12 +384,9 @@
               Clear Saved
             </button>
           </div>
-          <div style="display:flex;gap:8px;">
-            <button type="button" class="btn btn-secondary" id="btn-launch-standalone" title="Launch with in-memory polygon features (No credentials needed)">
-              Launch Standalone Demo
-            </button>
+          <div>
             <button type="button" class="btn btn-primary" id="btn-save-config">
-              Connect &amp; Load WebMap
+              Connect &amp; Authenticate
             </button>
           </div>
         </div>
@@ -354,6 +404,6 @@
   </div>
 
   <!-- Main Application Entry Point (ES Module) -->
-  <script type="module" src="js/app.js?v=5.2"></script>
+  <script type="module" src="js/app.js?v=5.6"></script>
 </body>
 </html>

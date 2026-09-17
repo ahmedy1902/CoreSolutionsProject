@@ -6,11 +6,11 @@
  */
 
 // Import application modules
-import { APP_CONFIG, isConfigReady, saveConfig, clearConfig } from "./config.js?v=5.2";
-import { initAuth, isStandalone } from "./auth.js?v=5.2";
-import { initMap } from "./map.js?v=5.2";
-import { initWidgets } from "./widgets.js?v=5.2";
-import { init as initEditor, refreshFeaturesList, showToast } from "./customEditor.js?v=5.2";
+import { APP_CONFIG, isConfigReady, saveConfig, clearConfig } from "./config.js?v=5.5";
+import { initAuth } from "./auth.js?v=5.5";
+import { initMap } from "./map.js?v=5.5";
+import { initWidgets } from "./widgets.js?v=5.5";
+import { init as initEditor, refreshFeaturesList, showToast } from "./customEditor.js?v=5.6";
 
 let connectionPromptResolver = null;
 let isInitialPrompt = false;
@@ -48,7 +48,7 @@ let isInitialPrompt = false;
     // Step 2: Initialize Map & MapView
     updateLoadingState(true, "Loading Web Map...");
     console.info("[App] Step 2/4: Initializing Map & MapView...");
-    const mapContext = await initMap("viewDiv");
+    const mapContext = await initMap("main-map");
 
     // Immediately hide loading overlay as soon as MapView resolves!
     updateLoadingState(false);
@@ -66,10 +66,7 @@ let isInitialPrompt = false;
     await initEditor(mapContext);
 
     console.info("[App] ArcGIS GIS Viewer Application successfully initialized!");
-    const modeNotice = isStandalone()
-      ? "Ready (Standalone Demo Mode)"
-      : "Ready (Connected to ArcGIS Online Web Map)";
-    showToast(modeNotice, "success");
+    showToast("Ready (Connected to ArcGIS Online Web Map)", "success");
 
   } catch (err) {
     console.error("[App] Critical Application Initialization Error:", err);
@@ -117,7 +114,6 @@ function setupConnectionModal() {
   const btnShowConnection = document.getElementById("btn-show-connection");
   const btnCloseConfig = document.getElementById("btn-close-config");
   const btnSaveConfig = document.getElementById("btn-save-config");
-  const btnLaunchStandalone = document.getElementById("btn-launch-standalone");
   const btnClearConfig = document.getElementById("btn-clear-config");
   const btnToggleSecret = document.getElementById("btn-toggle-secret-visibility");
   const inputSecret = document.getElementById("config-client-secret");
@@ -141,14 +137,11 @@ function setupConnectionModal() {
 
   if (btnCloseConfig) {
     btnCloseConfig.addEventListener("click", () => {
-      closeConfigModal();
-      if (isInitialPrompt && connectionPromptResolver) {
-        // Default to standalone so app doesn't hang
-        saveConfig({ mode: "standalone" }, false);
-        const resolver = connectionPromptResolver;
-        connectionPromptResolver = null;
-        resolver();
+      if (isInitialPrompt && !isConfigReady()) {
+        alert("ArcGIS Online authentication is required to access the application. Please enter your credentials or click 'Auto-Fill Credentials'.");
+        return;
       }
+      closeConfigModal();
     });
   }
 
@@ -167,20 +160,6 @@ function setupConnectionModal() {
     });
   }
 
-  if (btnLaunchStandalone) {
-    btnLaunchStandalone.addEventListener("click", () => {
-      saveConfig({ mode: "standalone" }, false);
-      closeConfigModal();
-      if (isInitialPrompt && connectionPromptResolver) {
-        const resolver = connectionPromptResolver;
-        connectionPromptResolver = null;
-        resolver();
-      } else {
-        window.location.reload();
-      }
-    });
-  }
-
   if (btnSaveConfig) {
     btnSaveConfig.addEventListener("click", () => {
       const portalUrl = (document.getElementById("config-portal-url")?.value || "").trim() || "https://www.arcgis.com";
@@ -189,8 +168,8 @@ function setupConnectionModal() {
       const clientSecret = (document.getElementById("config-client-secret")?.value || "").trim();
       const remember = document.getElementById("config-remember")?.checked !== false;
 
-      if (!clientId || !clientSecret) {
-        alert("Please enter both Client ID and Client Secret, or select 'Launch Standalone Demo'.");
+      if (!portalUrl || !webMapId || !clientId || !clientSecret) {
+        alert("All fields (Portal URL, WebMap Item ID, Client ID, Client Secret) are required to authenticate.");
         return;
       }
 
@@ -278,8 +257,7 @@ function updateHeaderInfo(mapInstance, layer) {
 
   const layerBadge = document.getElementById("layer-status-badge");
   if (layerBadge && layer) {
-    const modeText = isStandalone() ? "Standalone Demo" : "ArcGIS Online";
-    layerBadge.textContent = `${layer.title || "Sample_Layer"} (${modeText})`;
+    layerBadge.textContent = `${layer.title || "Sample_Layer"} (ArcGIS Online)`;
     layerBadge.classList.add("badge-active");
   }
 }
@@ -336,6 +314,19 @@ function setupLayoutControls() {
     btnToggleTheme.addEventListener("click", () => {
       document.body.classList.toggle("light-theme");
       const isLight = document.body.classList.contains("light-theme");
+
+      // Synchronize Calcite mode classes
+      document.body.classList.toggle("calcite-mode-dark", !isLight);
+      document.body.classList.toggle("calcite-mode-light", isLight);
+
+      // Dynamically swap official Esri theme stylesheet
+      const esriThemeLink = document.getElementById("esri-theme-stylesheet");
+      if (esriThemeLink) {
+        esriThemeLink.href = isLight
+          ? "https://js.arcgis.com/5.1/@arcgis/core/assets/esri/themes/light/main.css"
+          : "https://js.arcgis.com/5.1/@arcgis/core/assets/esri/themes/dark/main.css";
+      }
+
       btnToggleTheme.setAttribute("title", isLight ? "Switch to Dark Mode" : "Switch to Light Mode");
     });
   }

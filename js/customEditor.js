@@ -9,13 +9,14 @@
  * Layer fields: FullName (String), Email (String), InputDate (Date)
  * Geometry: esriGeometryPolygon
  */
-import SketchViewModel from "https://js.arcgis.com/5.1/@arcgis/core/widgets/Sketch/SketchViewModel.js";
-import GraphicsLayer from "https://js.arcgis.com/5.1/@arcgis/core/layers/GraphicsLayer.js";
-import Graphic from "https://js.arcgis.com/5.1/@arcgis/core/Graphic.js";
-import Expand from "https://js.arcgis.com/5.1/@arcgis/core/widgets/Expand.js";
-import FeatureForm from "https://js.arcgis.com/5.1/@arcgis/core/widgets/FeatureForm.js";
-import FeatureTemplates from "https://js.arcgis.com/5.1/@arcgis/core/widgets/FeatureTemplates.js";
-import Extent from "https://js.arcgis.com/5.1/@arcgis/core/geometry/Extent.js";
+
+// Module references dynamically loaded via $arcgis.import to ensure 100% same-realm compatibility
+let SketchViewModel = null;
+let GraphicsLayer = null;
+let Graphic = null;
+let FeatureForm = null;
+let FeatureTemplates = null;
+let Extent = null;
 
 // Module-level state
 let viewInstance = null;
@@ -27,6 +28,33 @@ let featureForm = null;
 let editFeature = null;
 let highlight = null;
 let isAddingNew = false;
+
+/**
+ * Loads Esri modules from the Web Component bundle to avoid prototype / instanceof cross-realm issues
+ */
+async function loadEsriModules() {
+  if (SketchViewModel && GraphicsLayer && Graphic) return;
+
+  if (window.$arcgis && typeof window.$arcgis.import === "function") {
+    [GraphicsLayer, SketchViewModel, Graphic, FeatureForm, FeatureTemplates, Extent] = await window.$arcgis.import([
+      "@arcgis/core/layers/GraphicsLayer.js",
+      "@arcgis/core/widgets/Sketch/SketchViewModel.js",
+      "@arcgis/core/Graphic.js",
+      "@arcgis/core/widgets/FeatureForm.js",
+      "@arcgis/core/widgets/FeatureTemplates.js",
+      "@arcgis/core/geometry/Extent.js"
+    ]);
+  } else {
+    [GraphicsLayer, SketchViewModel, Graphic, FeatureForm, FeatureTemplates, Extent] = await Promise.all([
+      import("https://js.arcgis.com/5.1/@arcgis/core/layers/GraphicsLayer.js").then(m => m.default),
+      import("https://js.arcgis.com/5.1/@arcgis/core/widgets/Sketch/SketchViewModel.js").then(m => m.default),
+      import("https://js.arcgis.com/5.1/@arcgis/core/Graphic.js").then(m => m.default),
+      import("https://js.arcgis.com/5.1/@arcgis/core/widgets/FeatureForm.js").then(m => m.default),
+      import("https://js.arcgis.com/5.1/@arcgis/core/widgets/FeatureTemplates.js").then(m => m.default),
+      import("https://js.arcgis.com/5.1/@arcgis/core/geometry/Extent.js").then(m => m.default)
+    ]);
+  }
+}
 
 // ==========================================
 // PUBLIC API (exported to app.js)
@@ -47,11 +75,14 @@ export async function init(mapContext) {
 
   console.info("[Editor] Initializing Custom Feature Editor for layer:", featureLayer.title);
 
+  // Load same-realm Esri modules from web component bundle
+  await loadEsriModules();
+
   // Expose zoomToAll globally
   setupGlobalHelpers();
 
   // 1. Graphics layer for sketching polygons
-  sketchLayer = new GraphicsLayer({ title: "Sketching Layer", listMode: "hide" });
+  sketchLayer = new GraphicsLayer({ title: "Custom Editor Sketch Layer", listMode: "hide" });
   viewInstance.map.add(sketchLayer);
 
   // 2. SketchViewModel for polygon drawing and reshaping
@@ -63,6 +94,10 @@ export async function init(mapContext) {
       color: [0, 121, 193, 0.4],
       outline: { color: [0, 121, 193, 1], width: 2 }
     },
+    defaultUpdateOptions: {
+      tool: "reshape",
+      toggleToolOnClick: false
+    },
     updateOnGraphicClick: true
   });
 
@@ -70,6 +105,7 @@ export async function init(mapContext) {
   featureForm = new FeatureForm({
     container: "formDiv",
     layer: featureLayer,
+    suppressDeprecationWarning: true,
     formTemplate: {
       title: "Feature Attributes",
       elements: [
@@ -83,21 +119,14 @@ export async function init(mapContext) {
   // 4. FeatureTemplates for selecting a template to create new features
   const templates = new FeatureTemplates({
     container: "addTemplatesDiv",
-    layers: [featureLayer]
+    layers: [featureLayer],
+    suppressDeprecationWarning: true
   });
 
-  // 5. Expand widget to house the editArea panel on the map
+  // 5. The editArea panel is already inside <arcgis-expand id="editor-expand"> in HTML
   const editAreaEl = document.getElementById("editArea");
   if (editAreaEl) {
     editAreaEl.style.display = "block";
-    const editExpand = new Expand({
-      expandIcon: "pencil",
-      expandTooltip: "Custom Editor",
-      expanded: true,
-      view: viewInstance,
-      content: editAreaEl
-    });
-    viewInstance.ui.add(editExpand, "top-right");
   }
 
   // 6. Wire up event listeners
@@ -111,11 +140,17 @@ export async function init(mapContext) {
 }
 
 // ==========================================
-// TEMPLATE SELECTION → START DRAWING
+// TEMPLATE SELECTION -> START DRAWING
 // ==========================================
 
 function setupTemplateSelection(templates) {
   templates.on("select", () => {
+    // Automatically expand the Custom Feature Editor panel
+    const editorExpand = document.getElementById("editor-expand");
+    if (editorExpand) {
+      editorExpand.expanded = true;
+    }
+
     clearEditor();
     isAddingNew = true;
     toggleCancelButtons(true);
@@ -137,30 +172,40 @@ function setupSketchEvents() {
   // When polygon drawing is complete or cancelled
   sketchVM.on("create", (event) => {
     if (event.state === "complete") {
-      console.log("[Editor] Polygon drawn:", event.geometry);
+      const drawnGeometry = event.graphic ? event.graphic.geometry : event.geometry;
+      console.log("[Editor] Polygon drawn successfully:", drawnGeometry);
       toggleCancelButtons(false);
+
+      sketchLayer.removeAll();
 
       // Create a temporary graphic with empty attributes
       editFeature = new Graphic({
-        geometry: event.geometry,
+        geometry: drawnGeometry,
         attributes: { FullName: "", Email: "", InputDate: Date.now() }
       });
 
       sketchLayer.add(editFeature);
 
+      // Automatically expand the Custom Feature Editor panel
+      const editorExpand = document.getElementById("editor-expand");
+      if (editorExpand) {
+        editorExpand.expanded = true;
+      }
+
       // Show FeatureForm for the new feature
       featureForm.feature = editFeature;
       document.getElementById("updateHeader").innerText = "Fill New Feature Details";
       toggleEditingDivs(false);
-      setEditorStatus("Enter feature attributes and click Save");
+      setEditorStatus("Enter feature attributes and click Save Changes");
     } else if (event.state === "cancel") {
       toggleCancelButtons(false);
+      setEditorStatus("Ready");
     }
   });
 
   // When geometry reshape/update is complete
   sketchVM.on("update", (event) => {
-    if (event.state === "complete" && event.graphics.length > 0 && editFeature) {
+    if (event.state === "complete" && event.graphics && event.graphics.length > 0 && editFeature) {
       editFeature.geometry = event.graphics[0].geometry;
       console.log("[Editor] Geometry reshape completed.");
     }
@@ -168,7 +213,7 @@ function setupSketchEvents() {
 }
 
 // ==========================================
-// MAP CLICK → SELECT EXISTING FEATURE
+// MAP CLICK -> SELECT EXISTING FEATURE
 // ==========================================
 
 function setupMapClickSelection() {
@@ -179,12 +224,12 @@ function setupMapClickSelection() {
     const response = await viewInstance.hitTest(event, { include: [featureLayer] });
 
     if (response.results.length === 0) {
-      // Clicked empty space → show templates panel
+      // Clicked empty space -> show templates panel
       toggleEditingDivs(true);
       return;
     }
 
-    // User clicked an existing feature → enter edit mode
+    // User clicked an existing feature -> enter edit mode
     clearEditor();
 
     const clickedGraphic = response.results[0].graphic;
@@ -200,6 +245,12 @@ function setupMapClickSelection() {
 
     if (featureSet.features.length > 0) {
       editFeature = featureSet.features[0];
+
+      // Automatically open the Custom Feature Editor panel
+      const editorExpand = document.getElementById("editor-expand");
+      if (editorExpand) {
+        editorExpand.expanded = true;
+      }
 
       // Show attributes in FeatureForm
       featureForm.feature = editFeature;
@@ -331,10 +382,16 @@ function setupEditorButtons() {
   const btnStartAdd = document.getElementById("btn-start-add-feature");
   if (btnStartAdd) {
     btnStartAdd.addEventListener("click", () => {
+      // Automatically expand the Custom Feature Editor panel
+      const editorExpand = document.getElementById("editor-expand");
+      if (editorExpand) {
+        editorExpand.expanded = true;
+      }
+
       clearEditor();
       isAddingNew = true;
       toggleCancelButtons(true);
-      setEditorStatus("Drawing Polygon: Click on map, double-click to finish");
+      setEditorStatus("Drawing Polygon: Click on map to add points, double-click to finish");
       showToast("Click on map to draw polygon vertices. Double-click to complete.", "info");
       sketchVM.create("polygon");
     });
@@ -458,20 +515,26 @@ export async function refreshFeaturesList() {
 
       tr.querySelector(".btn-edit").addEventListener("click", () => {
         selectFeatureById(oid);
+        const drawer = document.getElementById("features-drawer");
+        if (drawer) drawer.classList.remove("open");
       });
 
       tr.querySelector(".btn-delete").addEventListener("click", async () => {
-        if (confirm(`Delete Feature #${oid} (${name})?`)) {
-          const delGraphic = new Graphic({ attributes: { [oidField]: oid } });
-          await applyEditsToLayer({ deleteFeatures: [delGraphic] });
+        if (confirm(`Delete feature #${oid}?`)) {
+          const deleteGraphic = new Graphic({ attributes: { [oidField]: oid } });
+          await applyEditsToLayer({ deleteFeatures: [deleteGraphic] });
         }
       });
 
       tableBody.appendChild(tr);
     });
+
   } catch (err) {
-    console.error("[Editor] Failed to query features:", err);
-    tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:16px;color:#ef4444;">Failed to load: ${err.message}</td></tr>`;
+    console.warn("[Editor] Notice loading features table:", err);
+    tableBody.innerHTML = `
+      <tr><td colspan="5" style="text-align:center;padding:20px;color:var(--accent-danger);">
+        Could not load features table.
+      </td></tr>`;
   }
 }
 
@@ -489,6 +552,13 @@ async function selectFeatureById(objectId) {
 
   if (featureSet.features.length > 0) {
     editFeature = featureSet.features[0];
+
+    // Automatically expand the Custom Feature Editor panel
+    const editorExpand = document.getElementById("editor-expand");
+    if (editorExpand) {
+      editorExpand.expanded = true;
+    }
+
     featureForm.feature = editFeature;
 
     const layerView = await viewInstance.whenLayerView(featureLayer);
@@ -513,7 +583,7 @@ async function selectFeatureById(objectId) {
 
 function clearEditor() {
   if (highlight) { highlight.remove(); highlight = null; }
-  sketchLayer.removeAll();
+  if (sketchLayer) sketchLayer.removeAll();
   if (sketchVM && sketchVM.state === "active") sketchVM.cancel();
   editFeature = null;
   isAddingNew = false;
@@ -551,11 +621,12 @@ function setupGlobalHelpers() {
   window.mapView = viewInstance;
 
   window.zoomToAll = function () {
+    if (!Extent || !viewInstance) return;
     const egyptExtent = new Extent({
       xmin: 25.0, ymin: 22.0, xmax: 36.0, ymax: 32.0,
       spatialReference: { wkid: 4326 }
     });
-    if (viewInstance) viewInstance.goTo(egyptExtent);
+    viewInstance.goTo(egyptExtent);
   };
 }
 

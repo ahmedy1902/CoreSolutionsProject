@@ -12,7 +12,7 @@ const STORAGE_KEY = "arcgis_assessment_config";
 
 // Default public configuration (NO secrets hardcoded)
 const DEFAULT_CONFIG = {
-  mode: "arcgis-online", // Options: "arcgis-online" | "standalone"
+  mode: "arcgis-online",
   portalUrl: "https://www.arcgis.com",
   webMapId: "16ffde90eb6e4432ba2b81da63637ba0",
   clientId: "",
@@ -44,11 +44,15 @@ export function getStoredConfig() {
 }
 
 /**
- * Check whether we have valid credentials or standalone mode enabled
+ * Check whether we have all required credentials to connect to ArcGIS Online
  */
 export function isConfigReady() {
-  if (APP_CONFIG.mode === "standalone") return true;
-  return Boolean(APP_CONFIG.clientId && APP_CONFIG.clientSecret);
+  return Boolean(
+    APP_CONFIG.clientId &&
+    APP_CONFIG.clientSecret &&
+    APP_CONFIG.webMapId &&
+    APP_CONFIG.portalUrl
+  );
 }
 
 /**
