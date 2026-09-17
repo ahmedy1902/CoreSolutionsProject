@@ -3,7 +3,7 @@
  * ArcGIS Maps SDK for JavaScript v5.1 — Web Components
  * Loads live ArcGIS Online Web Map via Item ID and initializes operational FeatureLayer
  */
-import { APP_CONFIG } from "./config.js?v=5.5";
+import { APP_CONFIG } from "./config.js?v=5.7";
 
 let mapInstance = null;
 let view = null;

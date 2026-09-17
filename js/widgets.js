@@ -6,7 +6,7 @@
  * measurement auto-start, print layer toggling).
  */
 
-import { APP_CONFIG } from "./config.js?v=5.4";
+import { APP_CONFIG } from "./config.js?v=5.7";
 
 let instances = {};
 let sketchLayer = null;
@@ -80,20 +80,42 @@ export async function initWidgets(mapContext) {
   instances.print = printEl;
 
   // ==========================================
-  // 4. PRINT EXPAND — Toggle operational layer for public print service
+  // 4. PRINT EXPAND — Hide operational layer while print widget is open
   // ==========================================
   const printExpand = document.getElementById("print-expand");
-  if (printExpand && operationalLayer && webmap) {
-    printExpand.addEventListener("arcgisExpanded", () => {
-      if (webmap.layers.includes(operationalLayer)) {
-        webmap.remove(operationalLayer);
+  if (printExpand && operationalLayer) {
+    const updateVisibility = (isExpanded) => {
+      const expanded = (typeof isExpanded === "boolean")
+        ? isExpanded
+        : Boolean(printExpand.expanded || printExpand.hasAttribute("expanded"));
+      operationalLayer.visible = !expanded;
+      console.info(`[Print] Print widget ${expanded ? "OPEN (layer hidden)" : "CLOSED (layer visible)"}`);
+    };
+
+    // 1. Listen for arcgisPropertyChange event on <arcgis-expand>
+    printExpand.addEventListener("arcgisPropertyChange", (event) => {
+      if (event.detail && event.detail.name === "expanded") {
+        updateVisibility(event.detail.value);
       }
     });
-    printExpand.addEventListener("arcgisCollapsed", () => {
-      if (!webmap.layers.includes(operationalLayer)) {
-        webmap.add(operationalLayer);
-      }
+
+    // 2. MutationObserver for 'expanded' HTML attribute changes
+    const observer = new MutationObserver(() => {
+      updateVisibility();
     });
+    observer.observe(printExpand, { attributes: true, attributeFilter: ["expanded"] });
+
+    // 3. reactiveUtils watch for robust property binding
+    if (window.$arcgis && typeof window.$arcgis.import === "function") {
+      window.$arcgis.import(["@arcgis/core/core/reactiveUtils.js"]).then(([reactiveUtils]) => {
+        if (reactiveUtils && typeof reactiveUtils.watch === "function") {
+          reactiveUtils.watch(
+            () => printExpand.expanded,
+            (expanded) => updateVisibility(expanded)
+          );
+        }
+      }).catch(() => {});
+    }
   }
   instances.printExpand = printExpand;
 

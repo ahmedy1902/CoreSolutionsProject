@@ -6,11 +6,11 @@
  */
 
 // Import application modules
-import { APP_CONFIG, isConfigReady, saveConfig, clearConfig } from "./config.js?v=5.5";
-import { initAuth } from "./auth.js?v=5.5";
-import { initMap } from "./map.js?v=5.5";
-import { initWidgets } from "./widgets.js?v=5.5";
-import { init as initEditor, refreshFeaturesList, showToast } from "./customEditor.js?v=5.6";
+import { APP_CONFIG, isConfigReady, saveConfig, clearConfig } from "./config.js?v=5.7";
+import { initAuth } from "./auth.js?v=5.7";
+import { initMap } from "./map.js?v=5.7";
+import { initWidgets } from "./widgets.js?v=5.7";
+import { init as initEditor, refreshFeaturesList, showToast } from "./customEditor.js?v=5.7";
 
 let connectionPromptResolver = null;
 let isInitialPrompt = false;
