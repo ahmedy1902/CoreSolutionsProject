@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="calcite-mode-dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="description" content="ArcGIS Maps SDK for JavaScript GIS Enterprise Viewer - Technical Assessment with Custom applyEdits Feature Editor." />
   <meta name="author" content="Ahmed" />
   <title>ArcGIS Enterprise GIS Viewer | Technical Assessment</title>
@@ -14,8 +14,8 @@
   <script type="module" src="https://js.arcgis.com/5.1/"></script>
 
   <!-- Application Stylesheets -->
-  <link rel="stylesheet" href="css/style.css?v=5.5" />
-  <link rel="stylesheet" href="css/editor.css?v=5.5" />
+  <link rel="stylesheet" href="css/style.css?v=5.8" />
+  <link rel="stylesheet" href="css/editor.css?v=5.8" />
 </head>
 <body class="calcite-mode-dark">
   <div id="app-container">
@@ -37,15 +37,15 @@
         <span class="status-pill" id="layer-status-badge">Connecting...</span>
         <button type="button" class="btn btn-primary" id="btn-start-add-feature" title="Draw and add a new polygon feature">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
-          Add Feature
+          <span class="btn-text">Add Feature</span>
         </button>
         <button type="button" class="btn btn-secondary" id="btn-cancel-add-feature" style="display:none; background-color:#ef4444; border-color:#ef4444; color:#ffffff;" title="Cancel drawing feature">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
-          Cancel Add
+          <span class="btn-text">Cancel Add</span>
         </button>
         <button type="button" class="btn btn-secondary" id="btn-toggle-features-drawer" title="Open feature data table">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-          Layer Data
+          <span class="btn-text">Layer Data</span>
           <span class="count-badge" id="features-count-badge">0</span>
         </button>
       </div>
@@ -65,48 +65,48 @@
     </header>
 
     <!-- Map Viewport with Web Components -->
-    <arcgis-map id="main-map" role="region" aria-label="ArcGIS Interactive Map">
+    <arcgis-map id="main-map" class="calcite-mode-dark" role="region" aria-label="ArcGIS Interactive Map">
       <!-- Top Left Tools -->
-      <arcgis-zoom slot="top-left"></arcgis-zoom>
-      <arcgis-home slot="top-left"></arcgis-home>
-      <arcgis-locate slot="top-left"></arcgis-locate>
-      <arcgis-fullscreen slot="top-left"></arcgis-fullscreen>
+      <arcgis-zoom slot="top-left" class="calcite-mode-dark"></arcgis-zoom>
+      <arcgis-home slot="top-left" class="calcite-mode-dark"></arcgis-home>
+      <arcgis-locate slot="top-left" class="calcite-mode-dark"></arcgis-locate>
+      <arcgis-fullscreen slot="top-left" class="calcite-mode-dark"></arcgis-fullscreen>
 
       <!-- Bottom Left ScaleBar -->
-      <arcgis-scale-bar slot="bottom-left" unit="dual"></arcgis-scale-bar>
+      <arcgis-scale-bar slot="bottom-left" unit="dual" class="calcite-mode-dark"></arcgis-scale-bar>
 
       <!-- Top Right Search & Panelled Tools -->
-      <arcgis-search slot="top-right" id="main-search"></arcgis-search>
+      <arcgis-search slot="top-right" id="main-search" class="calcite-mode-dark"></arcgis-search>
 
-      <arcgis-expand slot="top-right" group="top-right" expand-tooltip="Layer List">
-        <arcgis-layer-list></arcgis-layer-list>
+      <arcgis-expand slot="top-right" group="top-right" expand-tooltip="Layer List" mode="floating" class="calcite-mode-dark">
+        <arcgis-layer-list class="calcite-mode-dark"></arcgis-layer-list>
       </arcgis-expand>
 
-      <arcgis-expand slot="top-right" group="top-right" expand-tooltip="Map Legend">
-        <arcgis-legend></arcgis-legend>
+      <arcgis-expand slot="top-right" group="top-right" expand-tooltip="Map Legend" mode="floating" class="calcite-mode-dark">
+        <arcgis-legend class="calcite-mode-dark"></arcgis-legend>
       </arcgis-expand>
 
-      <arcgis-expand slot="top-right" group="top-right" expand-tooltip="Basemap Gallery">
-        <arcgis-basemap-gallery></arcgis-basemap-gallery>
+      <arcgis-expand slot="top-right" group="top-right" expand-tooltip="Basemap Gallery" mode="floating" class="calcite-mode-dark">
+        <arcgis-basemap-gallery class="calcite-mode-dark"></arcgis-basemap-gallery>
       </arcgis-expand>
 
-      <arcgis-expand slot="top-right" group="top-right" expand-tooltip="Area Measurement" id="area-expand">
-        <arcgis-area-measurement-2d id="area-measurement"></arcgis-area-measurement-2d>
+      <arcgis-expand slot="top-right" group="top-right" expand-tooltip="Area Measurement" id="area-expand" mode="floating" class="calcite-mode-dark">
+        <arcgis-area-measurement-2d id="area-measurement" class="calcite-mode-dark"></arcgis-area-measurement-2d>
       </arcgis-expand>
 
-      <arcgis-expand slot="top-right" group="top-right" expand-tooltip="Distance Measurement" id="distance-expand">
-        <arcgis-distance-measurement-2d id="distance-measurement"></arcgis-distance-measurement-2d>
+      <arcgis-expand slot="top-right" group="top-right" expand-tooltip="Distance Measurement" id="distance-expand" mode="floating" class="calcite-mode-dark">
+        <arcgis-distance-measurement-2d id="distance-measurement" class="calcite-mode-dark"></arcgis-distance-measurement-2d>
       </arcgis-expand>
 
-      <arcgis-expand slot="top-right" group="top-right" expand-tooltip="Print Map" id="print-expand">
-        <arcgis-print id="map-print"></arcgis-print>
+      <arcgis-expand slot="top-right" group="top-right" expand-tooltip="Print Map" id="print-expand" mode="floating" class="calcite-mode-dark">
+        <arcgis-print id="map-print" class="calcite-mode-dark"></arcgis-print>
       </arcgis-expand>
 
-      <arcgis-expand slot="top-right" group="top-right" expand-tooltip="Sketch Graphics (Bonus)" id="sketch-expand">
-        <arcgis-sketch id="main-sketch"></arcgis-sketch>
+      <arcgis-expand slot="top-right" group="top-right" expand-tooltip="Sketch Graphics (Bonus)" id="sketch-expand" mode="floating" class="calcite-mode-dark">
+        <arcgis-sketch id="main-sketch" class="calcite-mode-dark"></arcgis-sketch>
       </arcgis-expand>
 
-      <arcgis-expand slot="top-right" group="top-right" expand-tooltip="Custom Feature Editor" id="editor-expand">
+      <arcgis-expand slot="top-right" group="top-right" expand-tooltip="Custom Feature Editor" id="editor-expand" mode="floating" class="calcite-mode-dark">
         <div id="editArea" class="editArea-container esri-widget--panel" style="display:block;">
           <div id="addFeatureDiv" style="display:block;">
             <h3 class="list-heading">Manage Features</h3>
@@ -404,6 +404,6 @@
   </div>
 
   <!-- Main Application Entry Point (ES Module) -->
-  <script type="module" src="js/app.js?v=5.7"></script>
+  <script type="module" src="js/app.js?v=5.8"></script>
 </body>
 </html>

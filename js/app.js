@@ -315,11 +315,33 @@ function setupLayoutControls() {
       document.body.classList.toggle("light-theme");
       const isLight = document.body.classList.contains("light-theme");
 
-      // Synchronize Calcite mode classes
+      // 1. Synchronize Calcite mode on html root element (primary Calcite hook)
+      document.documentElement.classList.toggle("calcite-mode-dark", !isLight);
+      document.documentElement.classList.toggle("calcite-mode-light", isLight);
+
+      // 2. Synchronize Calcite mode on body
       document.body.classList.toggle("calcite-mode-dark", !isLight);
       document.body.classList.toggle("calcite-mode-light", isLight);
 
-      // Dynamically swap official Esri theme stylesheet
+      // 3. Synchronize on map element and all slotted ArcGIS Web Components
+      const mapEl = document.getElementById("main-map") || document.querySelector("arcgis-map");
+      if (mapEl) {
+        mapEl.classList.toggle("calcite-mode-dark", !isLight);
+        mapEl.classList.toggle("calcite-mode-light", isLight);
+      }
+
+      document.querySelectorAll(
+        "arcgis-map, arcgis-zoom, arcgis-home, arcgis-locate, arcgis-fullscreen, " +
+        "arcgis-scale-bar, arcgis-search, arcgis-expand, arcgis-layer-list, " +
+        "arcgis-legend, arcgis-basemap-gallery, arcgis-area-measurement-2d, " +
+        "arcgis-distance-measurement-2d, arcgis-print, arcgis-sketch, " +
+        "calcite-panel, calcite-action, calcite-action-bar, calcite-button"
+      ).forEach(el => {
+        el.classList.toggle("calcite-mode-dark", !isLight);
+        el.classList.toggle("calcite-mode-light", isLight);
+      });
+
+      // 4. Dynamically swap official Esri theme stylesheet
       const esriThemeLink = document.getElementById("esri-theme-stylesheet");
       if (esriThemeLink) {
         esriThemeLink.href = isLight

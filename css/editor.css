@@ -13,13 +13,13 @@
   width: 310px;
   max-height: 75vh;
   box-sizing: border-box;
+  transition: background-color var(--transition-normal), color var(--transition-normal);
 }
 
 .editArea-container .list-heading {
   font-weight: 600;
   margin-top: 2px;
   margin-bottom: 12px;
-  color: var(--text-primary) !important;
   font-size: 1.05rem;
   letter-spacing: -0.01em;
 }
@@ -28,37 +28,31 @@
   font-size: 0.82rem;
   padding-left: 1.3em;
   margin-bottom: 14px;
-  color: var(--text-secondary) !important;
   line-height: 1.5;
 }
 
 .editArea-container .editor-instruction-list li {
-  color: var(--text-secondary) !important;
   margin-bottom: 4px;
 }
 
 .editArea-container .editor-instruction-list li em {
-  color: var(--accent-primary);
   font-style: normal;
   font-weight: 600;
 }
 
 .editArea-container #updateHeader {
-  color: var(--text-primary) !important;
   font-size: 0.95rem;
   font-weight: 600;
   margin: 0 0 10px 0;
 }
 
 .editArea-container .editor-footer-instruction {
-  color: var(--text-secondary) !important;
   font-size: 0.82rem;
   line-height: 1.4;
   margin: 0;
 }
 
 .editArea-container .or-wrap {
-  background: var(--border-color) !important;
   height: 1px;
   margin: 1.5em 0;
   overflow: visible;
@@ -66,8 +60,6 @@
 }
 
 .editArea-container .or-text {
-  background: var(--bg-panel) !important;
-  color: var(--text-muted) !important;
   font-size: 0.78rem;
   line-height: 0;
   padding: 0 1em;
@@ -84,7 +76,6 @@
 .editArea-container .esri-feature-templates {
   width: 100%;
   background: transparent;
-  color: var(--text-primary);
 }
 
 .editArea-container .esri-feature-templates__section-header {
@@ -97,27 +88,18 @@
 }
 
 .editArea-container .esri-feature-templates__layer-title {
-  color: var(--text-primary) !important;
   font-weight: 600;
   font-size: 0.85rem;
   margin-bottom: 6px;
 }
 
 .editArea-container .esri-feature-templates__item {
-  background: var(--bg-card) !important;
-  border: 1px solid var(--border-color) !important;
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
-  color: var(--text-primary) !important;
   transition: all var(--transition-fast);
 }
 
-.editArea-container .esri-feature-templates__item:hover {
-  background: var(--bg-card-hover) !important;
-  border-color: var(--accent-primary) !important;
-}
-
 .editArea-container .esri-feature-templates__item-label {
-  color: var(--text-primary) !important;
   font-weight: 500;
   font-size: 0.85rem;
 }
@@ -126,24 +108,9 @@
   max-height: 220px;
 }
 
-/* Feature Form Container & Controls */
+/* Feature Form Container & Controls Base */
 .editArea-container .esri-feature-form {
   background: transparent;
-  color: var(--text-primary);
-}
-
-.editArea-container .esri-feature-form .esri-form__label,
-.editArea-container .esri-feature-form label {
-  color: var(--text-secondary) !important;
-  font-size: 0.82rem;
-  font-weight: 500;
-}
-
-.editArea-container .esri-feature-form .esri-input,
-.editArea-container .esri-feature-form input {
-  background: var(--bg-secondary) !important;
-  color: var(--text-primary) !important;
-  border: 1px solid var(--border-color) !important;
 }
 
 .editArea-container .esri-button--tertiary {
@@ -154,6 +121,279 @@
 .editArea-container .esri-button--tertiary:hover {
   background: #ef4444;
   color: #fff;
+}
+
+/* ==========================================================================
+   EXPLICIT LIGHT THEME CONTRAST RULES (Fix for Light Mode)
+   ========================================================================== */
+body.light-theme .editArea-container,
+.calcite-mode-light .editArea-container,
+html.calcite-mode-light .editArea-container {
+  background: #ffffff !important;
+  color: #111827 !important;
+}
+
+body.light-theme .editArea-container .list-heading,
+.calcite-mode-light .editArea-container .list-heading,
+body.light-theme .editArea-container #updateHeader,
+.calcite-mode-light .editArea-container #updateHeader {
+  color: #111827 !important;
+}
+
+body.light-theme .editArea-container .editor-instruction-list,
+.calcite-mode-light .editArea-container .editor-instruction-list,
+body.light-theme .editArea-container .editor-instruction-list li,
+.calcite-mode-light .editArea-container .editor-instruction-list li,
+body.light-theme .editArea-container .editor-footer-instruction,
+.calcite-mode-light .editArea-container .editor-footer-instruction {
+  color: #374151 !important;
+}
+
+body.light-theme .editArea-container .editor-instruction-list li em,
+.calcite-mode-light .editArea-container .editor-instruction-list li em {
+  color: #0079c1 !important;
+  font-weight: 600;
+}
+
+body.light-theme .editArea-container .or-wrap,
+.calcite-mode-light .editArea-container .or-wrap {
+  background: #e5e7eb !important;
+}
+
+body.light-theme .editArea-container .or-text,
+.calcite-mode-light .editArea-container .or-text {
+  background: #ffffff !important;
+  color: #6b7280 !important;
+}
+
+body.light-theme .editArea-container .esri-feature-templates__layer-title,
+.calcite-mode-light .editArea-container .esri-feature-templates__layer-title {
+  color: #111827 !important;
+}
+
+body.light-theme .editArea-container .esri-feature-templates__item,
+.calcite-mode-light .editArea-container .esri-feature-templates__item {
+  background: #f9fafb !important;
+  border-color: #d1d5db !important;
+  color: #111827 !important;
+}
+
+body.light-theme .editArea-container .esri-feature-templates__item:hover,
+.calcite-mode-light .editArea-container .esri-feature-templates__item:hover {
+  background: #f3f4f6 !important;
+  border-color: #0079c1 !important;
+}
+
+body.light-theme .editArea-container .esri-feature-templates__item-label,
+.calcite-mode-light .editArea-container .esri-feature-templates__item-label {
+  color: #111827 !important;
+}
+
+/* Feature Form & All Controls in Light Mode */
+body.light-theme .editArea-container .esri-feature-form,
+.calcite-mode-light .editArea-container .esri-feature-form,
+body.light-theme .editArea-container .esri-feature-form *,
+.calcite-mode-light .editArea-container .esri-feature-form * {
+  --calcite-color-text-1: #111827 !important;
+  --calcite-color-text-2: #374151 !important;
+  --calcite-color-text-3: #4b5563 !important;
+  --calcite-color-foreground-1: #ffffff !important;
+  --calcite-color-foreground-2: #f9fafb !important;
+  --calcite-color-border-1: #d1d5db !important;
+  --calcite-color-border-2: #e5e7eb !important;
+}
+
+body.light-theme .editArea-container .esri-feature-form,
+.calcite-mode-light .editArea-container .esri-feature-form {
+  color: #111827 !important;
+}
+
+body.light-theme .editArea-container .esri-feature-form h1,
+body.light-theme .editArea-container .esri-feature-form h2,
+body.light-theme .editArea-container .esri-feature-form h3,
+body.light-theme .editArea-container .esri-feature-form h4,
+body.light-theme .editArea-container .esri-feature-form .esri-feature-form__title,
+body.light-theme .editArea-container .esri-feature-form .esri-feature-form__group-title,
+body.light-theme .editArea-container .esri-feature-form .esri-feature-form__group-header,
+.calcite-mode-light .editArea-container .esri-feature-form h4,
+.calcite-mode-light .editArea-container .esri-feature-form .esri-feature-form__title,
+.calcite-mode-light .editArea-container .esri-feature-form .esri-feature-form__group-title,
+.calcite-mode-light .editArea-container .esri-feature-form .esri-feature-form__group-header {
+  color: #111827 !important;
+  font-weight: 600;
+}
+
+body.light-theme .editArea-container .esri-feature-form label,
+body.light-theme .editArea-container .esri-feature-form .esri-form__label,
+body.light-theme .editArea-container .esri-feature-form .esri-feature-form__label,
+body.light-theme .editArea-container .esri-feature-form calcite-label,
+.calcite-mode-light .editArea-container .esri-feature-form label,
+.calcite-mode-light .editArea-container .esri-feature-form .esri-form__label,
+.calcite-mode-light .editArea-container .esri-feature-form .esri-feature-form__label,
+.calcite-mode-light .editArea-container .esri-feature-form calcite-label {
+  color: #1f2937 !important;
+  font-weight: 500;
+}
+
+body.light-theme .editArea-container .esri-feature-form .esri-input,
+body.light-theme .editArea-container .esri-feature-form input,
+body.light-theme .editArea-container .esri-feature-form calcite-input-text,
+body.light-theme .editArea-container .esri-feature-form calcite-input-number,
+body.light-theme .editArea-container .esri-feature-form calcite-input-date-picker,
+.calcite-mode-light .editArea-container .esri-feature-form .esri-input,
+.calcite-mode-light .editArea-container .esri-feature-form input,
+.calcite-mode-light .editArea-container .esri-feature-form calcite-input-text,
+.calcite-mode-light .editArea-container .esri-feature-form calcite-input-number,
+.calcite-mode-light .editArea-container .esri-feature-form calcite-input-date-picker {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border: 1px solid #d1d5db !important;
+}
+
+body.light-theme .editArea-container .esri-feature-form .esri-feature-form__required-indicator,
+.calcite-mode-light .editArea-container .esri-feature-form .esri-feature-form__required-indicator {
+  color: #dc2626 !important;
+}
+
+body.light-theme .editArea-container .esri-feature-form .esri-feature-form__validation-message,
+body.light-theme .editArea-container .esri-feature-form .esri-form__message,
+.calcite-mode-light .editArea-container .esri-feature-form .esri-feature-form__validation-message,
+.calcite-mode-light .editArea-container .esri-feature-form .esri-form__message {
+  color: #4b5563 !important;
+}
+
+/* ==========================================================================
+   EXPLICIT DARK THEME CONTRAST RULES (Fix for Dark Mode)
+   ========================================================================== */
+body:not(.light-theme) .editArea-container,
+.calcite-mode-dark .editArea-container,
+html.calcite-mode-dark .editArea-container {
+  background: #2b2b2b !important;
+  color: #ffffff !important;
+}
+
+body:not(.light-theme) .editArea-container .list-heading,
+.calcite-mode-dark .editArea-container .list-heading,
+body:not(.light-theme) .editArea-container #updateHeader,
+.calcite-mode-dark .editArea-container #updateHeader {
+  color: #ffffff !important;
+}
+
+body:not(.light-theme) .editArea-container .editor-instruction-list,
+.calcite-mode-dark .editArea-container .editor-instruction-list,
+body:not(.light-theme) .editArea-container .editor-instruction-list li,
+.calcite-mode-dark .editArea-container .editor-instruction-list li,
+body:not(.light-theme) .editArea-container .editor-footer-instruction,
+.calcite-mode-dark .editArea-container .editor-footer-instruction {
+  color: #d1d5db !important;
+}
+
+body:not(.light-theme) .editArea-container .editor-instruction-list li em,
+.calcite-mode-dark .editArea-container .editor-instruction-list li em {
+  color: #60a5fa !important;
+  font-weight: 600;
+}
+
+body:not(.light-theme) .editArea-container .or-wrap,
+.calcite-mode-dark .editArea-container .or-wrap {
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+body:not(.light-theme) .editArea-container .or-text,
+.calcite-mode-dark .editArea-container .or-text {
+  background: #2b2b2b !important;
+  color: #9ca3af !important;
+}
+
+body:not(.light-theme) .editArea-container .esri-feature-templates__layer-title,
+.calcite-mode-dark .editArea-container .esri-feature-templates__layer-title {
+  color: #ffffff !important;
+}
+
+body:not(.light-theme) .editArea-container .esri-feature-templates__item,
+.calcite-mode-dark .editArea-container .esri-feature-templates__item {
+  background: #323232 !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+}
+
+body:not(.light-theme) .editArea-container .esri-feature-templates__item:hover,
+.calcite-mode-dark .editArea-container .esri-feature-templates__item:hover {
+  background: #3a3a3a !important;
+  border-color: #0079c1 !important;
+}
+
+body:not(.light-theme) .editArea-container .esri-feature-templates__item-label,
+.calcite-mode-dark .editArea-container .esri-feature-templates__item-label {
+  color: #ffffff !important;
+}
+
+/* Feature Form & All Controls in Dark Mode */
+body:not(.light-theme) .editArea-container .esri-feature-form,
+.calcite-mode-dark .editArea-container .esri-feature-form,
+body:not(.light-theme) .editArea-container .esri-feature-form *,
+.calcite-mode-dark .editArea-container .esri-feature-form * {
+  --calcite-color-text-1: #ffffff !important;
+  --calcite-color-text-2: #d1d5db !important;
+  --calcite-color-text-3: #9ca3af !important;
+  --calcite-color-foreground-1: #2b2b2b !important;
+  --calcite-color-foreground-2: #323232 !important;
+  --calcite-color-border-1: rgba(255, 255, 255, 0.15) !important;
+  --calcite-color-border-2: rgba(255, 255, 255, 0.08) !important;
+}
+
+body:not(.light-theme) .editArea-container .esri-feature-form h1,
+body:not(.light-theme) .editArea-container .esri-feature-form h2,
+body:not(.light-theme) .editArea-container .esri-feature-form h3,
+body:not(.light-theme) .editArea-container .esri-feature-form h4,
+body:not(.light-theme) .editArea-container .esri-feature-form .esri-feature-form__title,
+body:not(.light-theme) .editArea-container .esri-feature-form .esri-feature-form__group-title,
+body:not(.light-theme) .editArea-container .esri-feature-form .esri-feature-form__group-header,
+.calcite-mode-dark .editArea-container .esri-feature-form h4,
+.calcite-mode-dark .editArea-container .esri-feature-form .esri-feature-form__title,
+.calcite-mode-dark .editArea-container .esri-feature-form .esri-feature-form__group-title,
+.calcite-mode-dark .editArea-container .esri-feature-form .esri-feature-form__group-header {
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+body:not(.light-theme) .editArea-container .esri-feature-form label,
+body:not(.light-theme) .editArea-container .esri-feature-form .esri-form__label,
+body:not(.light-theme) .editArea-container .esri-feature-form .esri-feature-form__label,
+body:not(.light-theme) .editArea-container .esri-feature-form calcite-label,
+.calcite-mode-dark .editArea-container .esri-feature-form label,
+.calcite-mode-dark .editArea-container .esri-feature-form .esri-form__label,
+.calcite-mode-dark .editArea-container .esri-feature-form .esri-feature-form__label,
+.calcite-mode-dark .editArea-container .esri-feature-form calcite-label {
+  color: #d1d5db !important;
+  font-weight: 500;
+}
+
+body:not(.light-theme) .editArea-container .esri-feature-form .esri-input,
+body:not(.light-theme) .editArea-container .esri-feature-form input,
+body:not(.light-theme) .editArea-container .esri-feature-form calcite-input-text,
+body:not(.light-theme) .editArea-container .esri-feature-form calcite-input-number,
+body:not(.light-theme) .editArea-container .esri-feature-form calcite-input-date-picker,
+.calcite-mode-dark .editArea-container .esri-feature-form .esri-input,
+.calcite-mode-dark .editArea-container .esri-feature-form input,
+.calcite-mode-dark .editArea-container .esri-feature-form calcite-input-text,
+.calcite-mode-dark .editArea-container .esri-feature-form calcite-input-number,
+.calcite-mode-dark .editArea-container .esri-feature-form calcite-input-date-picker {
+  background-color: #242424 !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+body:not(.light-theme) .editArea-container .esri-feature-form .esri-feature-form__required-indicator,
+.calcite-mode-dark .editArea-container .esri-feature-form .esri-feature-form__required-indicator {
+  color: #ef4444 !important;
+}
+
+body:not(.light-theme) .editArea-container .esri-feature-form .esri-feature-form__validation-message,
+body:not(.light-theme) .editArea-container .esri-feature-form .esri-form__message,
+.calcite-mode-dark .editArea-container .esri-feature-form .esri-feature-form__validation-message,
+.calcite-mode-dark .editArea-container .esri-feature-form .esri-form__message {
+  color: #9ca3af !important;
 }
 
 /* Toast Notification Container */

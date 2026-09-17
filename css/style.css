@@ -45,10 +45,23 @@
   /* Transitions */
   --transition-fast: 0.12s ease;
   --transition-normal: 0.2s ease;
+
+  /* Calcite Mode Dark Tokens (Default) */
+  --calcite-color-background: #242424;
+  --calcite-color-foreground-1: #2b2b2b;
+  --calcite-color-foreground-2: #323232;
+  --calcite-color-foreground-3: #3a3a3a;
+  --calcite-color-text-1: #ffffff;
+  --calcite-color-text-2: #cccccc;
+  --calcite-color-text-3: #999999;
+  --calcite-color-border-1: rgba(255, 255, 255, 0.15);
+  --calcite-color-border-2: rgba(255, 255, 255, 0.1);
+  --calcite-color-border-3: rgba(255, 255, 255, 0.05);
 }
 
 /* Light Theme Variables (Esri Calcite Light) */
-body.light-theme {
+body.light-theme,
+html.calcite-mode-light {
   --bg-primary: #f8f8f8;
   --bg-secondary: #ffffff;
   --bg-panel: #ffffff;
@@ -58,14 +71,26 @@ body.light-theme {
   --border-color: #dcdcdc;
   --border-subtle: #eeeeee;
 
-  --text-primary: #323232;
-  --text-secondary: #595959;
-  --text-muted: #8c8c8c;
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
 
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
   --shadow-md: 0 3px 6px rgba(0, 0, 0, 0.15);
   --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.18);
   --shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.2);
+
+  /* Calcite Mode Light Tokens */
+  --calcite-color-background: #f8f8f8;
+  --calcite-color-foreground-1: #ffffff;
+  --calcite-color-foreground-2: #f3f3f3;
+  --calcite-color-foreground-3: #e8e8e8;
+  --calcite-color-text-1: #111827;
+  --calcite-color-text-2: #4b5563;
+  --calcite-color-text-3: #6b7280;
+  --calcite-color-border-1: #dcdcdc;
+  --calcite-color-border-2: #e0e0e0;
+  --calcite-color-border-3: #eeeeee;
 }
 
 /* Base Reset */
@@ -444,7 +469,67 @@ html, body {
   box-shadow: var(--shadow-xl) !important;
 }
 
-/* Responsive Rules */
+/* ==========================================================================
+   Side Widgets & Map Controls Theme Synchronization
+   ========================================================================== */
+
+/* Dark Mode Side Tool Buttons (Default) */
+html.calcite-mode-dark arcgis-map,
+body:not(.light-theme) arcgis-map {
+  --calcite-color-background: #242424;
+  --calcite-color-foreground-1: #2b2b2b;
+  --calcite-color-foreground-2: #323232;
+  --calcite-color-foreground-3: #3a3a3a;
+  --calcite-color-text-1: #ffffff;
+  --calcite-color-text-2: #cccccc;
+  --calcite-color-text-3: #999999;
+  --calcite-color-border-1: rgba(255, 255, 255, 0.15);
+  --calcite-color-border-2: rgba(255, 255, 255, 0.1);
+}
+
+body:not(.light-theme) arcgis-zoom,
+body:not(.light-theme) arcgis-home,
+body:not(.light-theme) arcgis-locate,
+body:not(.light-theme) arcgis-fullscreen,
+body:not(.light-theme) arcgis-search,
+body:not(.light-theme) arcgis-expand,
+body:not(.light-theme) arcgis-scale-bar,
+body:not(.light-theme) .esri-widget--button,
+body:not(.light-theme) .esri-widget {
+  background-color: #2b2b2b !important;
+  color: #ffffff !important;
+}
+
+/* Light Mode Side Tool Buttons */
+html.calcite-mode-light arcgis-map,
+body.light-theme arcgis-map {
+  --calcite-color-background: #f8f8f8;
+  --calcite-color-foreground-1: #ffffff;
+  --calcite-color-foreground-2: #f3f3f3;
+  --calcite-color-foreground-3: #e8e8e8;
+  --calcite-color-text-1: #111827;
+  --calcite-color-text-2: #4b5563;
+  --calcite-color-text-3: #6b7280;
+  --calcite-color-border-1: #dcdcdc;
+  --calcite-color-border-2: #e0e0e0;
+}
+
+body.light-theme arcgis-zoom,
+body.light-theme arcgis-home,
+body.light-theme arcgis-locate,
+body.light-theme arcgis-fullscreen,
+body.light-theme arcgis-search,
+body.light-theme arcgis-expand,
+body.light-theme arcgis-scale-bar,
+body.light-theme .esri-widget--button,
+body.light-theme .esri-widget {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+}
+
+/* ==========================================================================
+   Responsive Rules for Tablets & Mobile Screens
+   ========================================================================== */
 @media (max-width: 1024px) {
   .features-drawer {
     width: 440px;
@@ -453,26 +538,118 @@ html, body {
 
 @media (max-width: 768px) {
   .app-header {
-    padding: 0 12px;
+    padding: 0 8px;
+    height: 48px;
   }
-  .app-title span.title-long {
+  
+  .header-brand .map-title-sub,
+  .header-brand .badge-tag {
     display: none;
   }
+
+  .header-brand .app-title {
+    font-size: 0.92rem;
+  }
+
+  .brand-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 0.72rem;
+  }
+
   .header-center-tools {
+    display: flex !important;
+    align-items: center;
+    gap: 6px;
+  }
+
+  #layer-status-badge {
     display: none;
   }
+
+  .header-center-tools .btn {
+    padding: 6px 10px;
+    font-size: 0.78rem;
+  }
+
+  /* Compact buttons showing icons on small screens */
+  .header-center-tools .btn .btn-text {
+    display: none;
+  }
+
   .features-drawer {
     width: 100vw;
     right: -100vw;
+    height: 60vh;
+    bottom: 0;
+    top: auto;
+  }
+
+  /* Prevent any expand widget or panel from turning into a full-screen or bottom-covering drawer */
+  arcgis-expand {
+    max-width: calc(100vw - 60px) !important;
+  }
+
+  /* Keep all expand contents floating as compact cards near the top right so the map is visible */
+  arcgis-expand [slot="content"],
+  arcgis-expand > div,
+  .editArea-container,
+  arcgis-layer-list,
+  arcgis-legend,
+  arcgis-basemap-gallery,
+  arcgis-print,
+  arcgis-area-measurement-2d,
+  arcgis-distance-measurement-2d,
+  arcgis-sketch {
+    max-width: 295px !important;
+    max-height: 48vh !important;
+    overflow-y: auto !important;
+    box-shadow: var(--shadow-lg) !important;
+  }
+
+  .editArea-container {
+    width: 295px !important;
+    padding: 10px 12px !important;
+  }
+
+  /* Keep status pill compact and out of the way */
+  .map-status-pill {
+    bottom: 14px;
+    right: 14px;
+    padding: 5px 10px;
+    font-size: 0.72rem;
   }
 }
 
 @media (max-width: 480px) {
-  .brand-icon {
-    width: 28px;
-    height: 28px;
+  .app-title span.title-long {
+    display: none;
   }
-  .app-title {
-    font-size: 0.95rem;
+  
+  .header-actions {
+    gap: 4px;
+  }
+
+  .btn-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  arcgis-expand [slot="content"],
+  arcgis-expand > div,
+  .editArea-container,
+  arcgis-layer-list,
+  arcgis-legend,
+  arcgis-basemap-gallery,
+  arcgis-print,
+  arcgis-area-measurement-2d,
+  arcgis-distance-measurement-2d,
+  arcgis-sketch {
+    max-width: 270px !important;
+    max-height: 44vh !important;
+  }
+
+  .editArea-container {
+    width: 270px !important;
   }
 }

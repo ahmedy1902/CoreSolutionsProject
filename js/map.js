@@ -75,7 +75,7 @@ export async function initMap(containerId = "main-map") {
       defaultPopupTemplateEnabled: true
     };
 
-    operationalLayer = findOperationalLayer(mapInstance, APP_CONFIG.operationalLayerTitle);
+    operationalLayer = await waitForOperationalLayer(mapInstance, APP_CONFIG.operationalLayerTitle);
 
     if (operationalLayer) {
       try {
@@ -96,17 +96,53 @@ export async function initMap(containerId = "main-map") {
   }
 }
 
+async function waitForOperationalLayer(mapInst, targetTitle, maxWaitMs = 15000) {
+  if (!mapInst) return null;
+
+  // 1. Await WebMap readiness if available
+  if (typeof mapInst.when === "function") {
+    try {
+      await mapInst.when();
+    } catch (e) {
+      console.warn("[Map] mapInstance.when() notice:", e);
+    }
+  }
+
+  if (typeof mapInst.loadAll === "function") {
+    try {
+      await mapInst.loadAll();
+    } catch {
+      // ignore
+    }
+  }
+
+  // 2. Poll for the operational layer with small intervals
+  const startTime = Date.now();
+  while (Date.now() - startTime < maxWaitMs) {
+    const layer = findOperationalLayer(mapInst, targetTitle);
+    if (layer) return layer;
+    await new Promise(r => setTimeout(r, 250));
+  }
+
+  return findOperationalLayer(mapInst, targetTitle);
+}
+
 function findOperationalLayer(mapInst, targetTitle) {
   if (!mapInst) return null;
   let layer = null;
+  const targetLower = targetTitle ? targetTitle.toLowerCase() : "";
+
   if (targetTitle) {
     if (mapInst.layers) {
-      layer = mapInst.layers.find(l => l.title === targetTitle);
+      layer = mapInst.layers.find(l => 
+        l.title === targetTitle || (l.title && l.title.toLowerCase() === targetLower)
+      );
     }
     if (!layer && mapInst.allLayers) {
       layer = mapInst.allLayers.find(l =>
         l.title === targetTitle ||
-        (l.url && l.url.toLowerCase().includes(targetTitle.toLowerCase()))
+        (l.title && l.title.toLowerCase() === targetLower) ||
+        (l.url && l.url.toLowerCase().includes(targetLower))
       );
     }
   }
