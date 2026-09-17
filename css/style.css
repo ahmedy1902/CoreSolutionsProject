@@ -662,11 +662,18 @@ body.light-theme .esri-widget {
     box-shadow: var(--shadow-lg) !important;
   }
 
-  /* Sketch needs more height for its toolbar — let it breathe */
+  /* --- Sketch widget: NO size constraints — all toolbar icons must be visible ---
+     The expand container (calc(100vw-56px)) limits the outer width,
+     but the sketch itself must not be clipped. */
   arcgis-sketch {
-    max-width: 290px !important;
-    max-height: 52vh !important;
+    max-width: none !important;
+    max-height: none !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: visible !important;
     box-shadow: var(--shadow-lg) !important;
+    touch-action: manipulation !important;
+    -webkit-overflow-scrolling: touch;
   }
 
   .editArea-container {
@@ -679,15 +686,6 @@ body.light-theme .esri-widget {
   arcgis-distance-measurement-2d {
     touch-action: none !important;
     -ms-touch-action: none !important;
-  }
-
-  /* Sketch widget panel: allow tap on buttons + vertical scroll for tool list.
-     DO NOT set touch-action:none here — it blocks button interaction. */
-  arcgis-sketch {
-    touch-action: manipulation !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    -webkit-overflow-scrolling: touch;
   }
 
   /* --- Status pill --- */
@@ -731,7 +729,7 @@ body.light-theme .esri-widget {
     height: 30px;
   }
 
-  /* Smaller floating panels */
+  /* Smaller floating panels — sketch excluded (needs full size for icons) */
   arcgis-expand [slot="content"],
   arcgis-expand > div,
   .editArea-container,
@@ -740,8 +738,7 @@ body.light-theme .esri-widget {
   arcgis-basemap-gallery,
   arcgis-print,
   arcgis-area-measurement-2d,
-  arcgis-distance-measurement-2d,
-  arcgis-sketch {
+  arcgis-distance-measurement-2d {
     max-width: 260px !important;
     max-height: 42vh !important;
   }
