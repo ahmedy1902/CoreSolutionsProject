@@ -528,69 +528,95 @@ body.light-theme .esri-widget {
 }
 
 /* ==========================================================================
-   Responsive Rules for Tablets & Mobile Screens
+   Responsive Rules — Desktop / Tablet / Mobile
    ========================================================================== */
+
+/* ---- Tablet (≤1024px) ---- */
 @media (max-width: 1024px) {
   .features-drawer {
-    width: 440px;
+    width: 420px;
+  }
+
+  /* Constrain expand panels to reasonable size */
+  arcgis-expand [slot="content"],
+  arcgis-expand > div,
+  .editArea-container {
+    max-width: 320px !important;
+    max-height: 55vh !important;
+    overflow-y: auto !important;
   }
 }
 
+/* ---- Mobile-Landscape & Small Tablet (≤768px) ---- */
 @media (max-width: 768px) {
+  /* --- Header ---- */
   .app-header {
     padding: 0 8px;
-    height: 48px;
+    height: 46px;
   }
-  
+
+  :root {
+    --header-height: 46px;
+  }
+
   .header-brand .map-title-sub,
   .header-brand .badge-tag {
     display: none;
   }
 
   .header-brand .app-title {
-    font-size: 0.92rem;
+    font-size: 0.88rem;
   }
 
   .brand-icon {
     width: 28px;
     height: 28px;
-    font-size: 0.72rem;
+    font-size: 0.7rem;
   }
 
   .header-center-tools {
     display: flex !important;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
   }
 
   #layer-status-badge {
     display: none;
   }
 
+  /* Show only icons in header action buttons */
   .header-center-tools .btn {
-    padding: 6px 10px;
-    font-size: 0.78rem;
+    padding: 5px 9px;
+    font-size: 0.76rem;
   }
 
-  /* Compact buttons showing icons on small screens */
   .header-center-tools .btn .btn-text {
     display: none;
   }
 
+  /* --- Features Drawer becomes bottom sheet on mobile --- */
   .features-drawer {
-    width: 100vw;
-    right: -100vw;
-    height: 60vh;
-    bottom: 0;
-    top: auto;
+    width: 100vw !important;
+    right: 0 !important;
+    left: 0 !important;
+    height: 55vh;
+    bottom: -55vh;
+    top: auto !important;
+    transform: none !important;
+    border-radius: 14px 14px 0 0;
+    transition: bottom 0.3s ease;
   }
 
-  /* Prevent any expand widget or panel from turning into a full-screen or bottom-covering drawer */
+  .features-drawer.open {
+    bottom: 0 !important;
+    right: auto !important;
+  }
+
+  /* --- Floating expand panels — constrain to small cards --- */
   arcgis-expand {
-    max-width: calc(100vw - 60px) !important;
+    max-width: calc(100vw - 56px) !important;
   }
 
-  /* Keep all expand contents floating as compact cards near the top right so the map is visible */
   arcgis-expand [slot="content"],
   arcgis-expand > div,
   .editArea-container,
@@ -601,40 +627,67 @@ body.light-theme .esri-widget {
   arcgis-area-measurement-2d,
   arcgis-distance-measurement-2d,
   arcgis-sketch {
-    max-width: 295px !important;
-    max-height: 48vh !important;
+    max-width: 290px !important;
+    max-height: 46vh !important;
     overflow-y: auto !important;
+    overflow-x: hidden !important;
     box-shadow: var(--shadow-lg) !important;
   }
 
   .editArea-container {
-    width: 295px !important;
+    width: 290px !important;
     padding: 10px 12px !important;
   }
 
-  /* Keep status pill compact and out of the way */
+  /* --- Measurement widgets: ensure touch works --- */
+  arcgis-area-measurement-2d,
+  arcgis-distance-measurement-2d {
+    touch-action: none !important;
+    -ms-touch-action: none !important;
+  }
+
+  /* --- Status pill --- */
   .map-status-pill {
-    bottom: 14px;
-    right: 14px;
+    bottom: 12px;
+    right: 12px;
     padding: 5px 10px;
-    font-size: 0.72rem;
+    font-size: 0.7rem;
+  }
+
+  /* --- Modals: full-width on small screens --- */
+  .modal-card {
+    max-width: 96vw !important;
+    width: 96vw !important;
+    margin: 0 auto;
+  }
+
+  .modal-card.modal-lg {
+    max-width: 96vw !important;
+    width: 96vw !important;
+  }
+
+  /* Stack the connection config grid to single column */
+  .form-row[style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
   }
 }
 
+/* ---- Mobile-Portrait (≤480px) ---- */
 @media (max-width: 480px) {
   .app-title span.title-long {
     display: none;
   }
-  
+
   .header-actions {
-    gap: 4px;
+    gap: 3px;
   }
 
   .btn-icon {
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
   }
 
+  /* Smaller floating panels */
   arcgis-expand [slot="content"],
   arcgis-expand > div,
   .editArea-container,
@@ -645,11 +698,50 @@ body.light-theme .esri-widget {
   arcgis-area-measurement-2d,
   arcgis-distance-measurement-2d,
   arcgis-sketch {
-    max-width: 270px !important;
-    max-height: 44vh !important;
+    max-width: 260px !important;
+    max-height: 42vh !important;
   }
 
   .editArea-container {
-    width: 270px !important;
+    width: 260px !important;
+    padding: 8px 10px !important;
+  }
+
+  /* Scale bar — hide on tiny screens to save space */
+  arcgis-scale-bar {
+    display: none !important;
+  }
+
+  /* Status pill moves away from bottom-center tools */
+  .map-status-pill {
+    bottom: 10px;
+    right: 10px;
+    font-size: 0.68rem;
+  }
+
+  .features-drawer {
+    height: 62vh;
+    bottom: -62vh;
+  }
+
+  .features-drawer.open {
+    bottom: 0 !important;
+  }
+}
+
+/* ---- Hover/pointer precision: disable hover-only styles on touch devices ---- */
+@media (hover: none) and (pointer: coarse) {
+  /* Remove hover-state background flicker on touch */
+  .btn:hover,
+  .btn-icon:hover,
+  .btn-sm-action:hover {
+    opacity: 0.9;
+  }
+
+  /* Measurement & sketch panels: ensure map canvas gets touch events through */
+  arcgis-area-measurement-2d *,
+  arcgis-distance-measurement-2d * {
+    touch-action: none;
+    -ms-touch-action: none;
   }
 }

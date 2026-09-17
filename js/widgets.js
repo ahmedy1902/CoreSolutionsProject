@@ -3,7 +3,7 @@
  * ArcGIS Maps SDK for JavaScript v5.1 — Web Components
  * All widgets are now declared as <arcgis-*> HTML components in index.html.
  * This module configures component behavior that requires JS (search sources,
- * measurement auto-start, print layer toggling).
+ * measurement auto-start, print layer toggling, touch support).
  */
 
 import { APP_CONFIG } from "./config.js?v=5.7";
@@ -119,8 +119,95 @@ export async function initWidgets(mapContext) {
   }
   instances.printExpand = printExpand;
 
+  // ==========================================
+  // 5. MEASUREMENT — Touch / Mobile Support
+  // ==========================================
+  _setupMeasurementTouchSupport(view);
+
   console.info("[Widgets] All web component widgets configured successfully.");
   return instances;
+}
+
+/**
+ * Sets up touch-friendly measurement widget behaviour.
+ * On touch/mobile devices the SDK measurement widgets require a pointer-events
+ * pass-through so that finger taps register on the map canvas.
+ * We also listen for when each expand opens and immediately clear any previous
+ * measurement so the user gets a fresh tool each time.
+ */
+function _setupMeasurementTouchSupport(view) {
+  const isTouchDevice = ("ontouchstart" in window) || (navigator.maxTouchPoints > 0);
+  if (isTouchDevice) {
+    console.info("[Widgets] Touch device detected — configuring measurement touch support.");
+  }
+
+  const measurementPairs = [
+    { expandId: "area-expand",     widgetId: "area-measurement" },
+    { expandId: "distance-expand", widgetId: "distance-measurement" },
+  ];
+
+  measurementPairs.forEach(({ expandId, widgetId }) => {
+    const expandEl = document.getElementById(expandId);
+    const widgetEl = document.getElementById(widgetId);
+    if (!expandEl || !widgetEl) return;
+
+    // When the expand opens, clear stale measurement and ensure view is linked
+    const handleExpand = (isExpanded) => {
+      if (!isExpanded) return;
+
+      // Give the component time to render before clearing/activating
+      setTimeout(() => {
+        try {
+          // Clear any previous measurement so user starts fresh
+          if (typeof widgetEl.clear === "function") {
+            widgetEl.clear();
+          }
+
+          // On touch devices, pass touch events through to the map canvas
+          if (isTouchDevice) {
+            _enableTouchOnMeasurementWidget(widgetEl);
+          }
+        } catch (e) {
+          console.warn(`[Widgets] Measurement widget setup notice (${widgetId}):`, e);
+        }
+      }, 200);
+    };
+
+    // Listen for expand property change
+    expandEl.addEventListener("arcgisPropertyChange", (event) => {
+      if (event.detail && event.detail.name === "expanded") {
+        handleExpand(event.detail.value);
+      }
+    });
+
+    // MutationObserver fallback
+    const obs = new MutationObserver(() => {
+      const isExpanded = expandEl.expanded || expandEl.hasAttribute("expanded");
+      handleExpand(isExpanded);
+    });
+    obs.observe(expandEl, { attributes: true, attributeFilter: ["expanded"] });
+  });
+}
+
+/**
+ * Ensures touch events on the measurement widget's SVG/canvas panel bubble
+ * through to the ArcGIS MapView canvas, which requires touch-action:none on
+ * specific inner elements so the browser does not swallow them as scroll/pan.
+ */
+function _enableTouchOnMeasurementWidget(widgetEl) {
+  // Set touch-action on the widget host
+  widgetEl.style.touchAction = "none";
+
+  // Walk into shadow DOM if accessible (best-effort)
+  if (widgetEl.shadowRoot) {
+    const inner = widgetEl.shadowRoot.querySelectorAll(
+      ".esri-area-measurement-2d, .esri-distance-measurement-2d, " +
+      ".esri-measurement, [role='presentation'], .esri-widget"
+    );
+    inner.forEach(el => {
+      el.style.touchAction = "none";
+    });
+  }
 }
 
 export function getInstances() { return instances; }

@@ -2,7 +2,7 @@
 <html lang="en" class="calcite-mode-dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="description" content="ArcGIS Maps SDK for JavaScript GIS Enterprise Viewer - Technical Assessment with Custom applyEdits Feature Editor." />
   <meta name="author" content="Ahmed" />
   <title>ArcGIS Enterprise GIS Viewer | Technical Assessment</title>
@@ -14,8 +14,8 @@
   <script type="module" src="https://js.arcgis.com/5.1/"></script>
 
   <!-- Application Stylesheets -->
-  <link rel="stylesheet" href="css/style.css?v=5.8" />
-  <link rel="stylesheet" href="css/editor.css?v=5.8" />
+  <link rel="stylesheet" href="css/style.css?v=5.9" />
+  <link rel="stylesheet" href="css/editor.css?v=5.9" />
 </head>
 <body class="calcite-mode-dark">
   <div id="app-container">
@@ -65,7 +65,7 @@
     </header>
 
     <!-- Map Viewport with Web Components -->
-    <arcgis-map id="main-map" class="calcite-mode-dark" role="region" aria-label="ArcGIS Interactive Map">
+    <arcgis-map id="main-map" class="calcite-mode-dark" role="region" aria-label="ArcGIS Interactive Map" style="touch-action:none;">
       <!-- Top Left Tools -->
       <arcgis-zoom slot="top-left" class="calcite-mode-dark"></arcgis-zoom>
       <arcgis-home slot="top-left" class="calcite-mode-dark"></arcgis-home>
@@ -404,6 +404,6 @@
   </div>
 
   <!-- Main Application Entry Point (ES Module) -->
-  <script type="module" src="js/app.js?v=5.8"></script>
+  <script type="module" src="js/app.js?v=5.9"></script>
 </body>
 </html>
