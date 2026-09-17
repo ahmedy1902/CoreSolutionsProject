@@ -331,7 +331,7 @@ function setupLayoutControls() {
       }
 
       document.querySelectorAll(
-        "arcgis-map, arcgis-zoom, arcgis-home, arcgis-locate, arcgis-fullscreen, " +
+        "arcgis-map, arcgis-zoom, arcgis-home, arcgis-locate, arcgis-fullscreen, arcgis-compass, " +
         "arcgis-scale-bar, arcgis-search, arcgis-expand, arcgis-layer-list, " +
         "arcgis-legend, arcgis-basemap-gallery, arcgis-area-measurement-2d, " +
         "arcgis-distance-measurement-2d, arcgis-print, arcgis-sketch, " +
