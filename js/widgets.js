@@ -61,10 +61,53 @@ export async function initWidgets(mapContext) {
 
   // ==========================================
   // 2. SKETCH — <arcgis-sketch> manages its own internal GraphicsLayer
+  //    On mobile we need to ensure the expand open triggers proper view wiring.
   // ==========================================
   const sketchEl = document.getElementById("main-sketch");
+  const sketchExpand = document.getElementById("sketch-expand");
+
   if (sketchEl) {
     await customElements.whenDefined("arcgis-sketch");
+
+    const isTouchDevice = ("ontouchstart" in window) || (navigator.maxTouchPoints > 0);
+    if (isTouchDevice) {
+      console.info("[Widgets] Touch device: configuring sketch widget for mobile.");
+
+      // When the sketch expand opens, ensure the internal component is activated
+      const activateSketch = (isExpanded) => {
+        if (!isExpanded) return;
+        setTimeout(() => {
+          try {
+            // Force a resize so the sketch widget re-measures against the current viewport
+            if (typeof sketchEl.refresh === "function") sketchEl.refresh();
+
+            // Ensure the sketch host element is interactive
+            sketchEl.style.pointerEvents = "auto";
+            sketchEl.style.touchAction = "manipulation";
+
+            console.info("[Sketch] Sketch widget activated for mobile view.");
+          } catch (e) {
+            console.warn("[Sketch] Mobile activation notice:", e);
+          }
+        }, 300);
+      };
+
+      if (sketchExpand) {
+        // Listen for arcgisPropertyChange (SDK v5 Web Components event)
+        sketchExpand.addEventListener("arcgisPropertyChange", (evt) => {
+          if (evt.detail && evt.detail.name === "expanded") {
+            activateSketch(evt.detail.value);
+          }
+        });
+
+        // MutationObserver fallback for attribute-based expand state
+        const sketchObs = new MutationObserver(() => {
+          const expanded = sketchExpand.expanded || sketchExpand.hasAttribute("expanded");
+          activateSketch(expanded);
+        });
+        sketchObs.observe(sketchExpand, { attributes: true, attributeFilter: ["expanded"] });
+      }
+    }
   }
   instances.sketch = sketchEl;
 

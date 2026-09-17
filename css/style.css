@@ -654,12 +654,18 @@ body.light-theme .esri-widget {
   arcgis-basemap-gallery,
   arcgis-print,
   arcgis-area-measurement-2d,
-  arcgis-distance-measurement-2d,
-  arcgis-sketch {
+  arcgis-distance-measurement-2d {
     max-width: 290px !important;
     max-height: 46vh !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
+    box-shadow: var(--shadow-lg) !important;
+  }
+
+  /* Sketch needs more height for its toolbar — let it breathe */
+  arcgis-sketch {
+    max-width: 290px !important;
+    max-height: 52vh !important;
     box-shadow: var(--shadow-lg) !important;
   }
 
@@ -668,18 +674,20 @@ body.light-theme .esri-widget {
     padding: 10px 12px !important;
   }
 
-  /* --- Measurement + Sketch widgets: ensure touch works --- */
+  /* --- Measurement widgets only — sketch manages its own touch --- */
   arcgis-area-measurement-2d,
-  arcgis-distance-measurement-2d,
-  arcgis-sketch {
+  arcgis-distance-measurement-2d {
     touch-action: none !important;
     -ms-touch-action: none !important;
   }
 
-  /* Sketch widget inner panel: allow vertical scroll for tool options */
+  /* Sketch widget panel: allow tap on buttons + vertical scroll for tool list.
+     DO NOT set touch-action:none here — it blocks button interaction. */
   arcgis-sketch {
+    touch-action: manipulation !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* --- Status pill --- */
@@ -774,16 +782,18 @@ body.light-theme .esri-widget {
     opacity: 0.9;
   }
 
-  /* Measurement & sketch panels: ensure map canvas gets touch events through */
+  /* Only measurement widget internals need touch-action:none
+     (the map canvas itself already has it via inline style).
+     Sketch widget must NOT have touch-action:none — buttons won't be tappable. */
   arcgis-area-measurement-2d *,
-  arcgis-distance-measurement-2d *,
-  arcgis-sketch * {
+  arcgis-distance-measurement-2d * {
     touch-action: none;
     -ms-touch-action: none;
   }
 
-  /* But allow scroll within sketch tool list */
-  arcgis-sketch {
-    touch-action: pan-y !important;
+  /* Sketch: allow taps and vertical pan for tool list */
+  arcgis-sketch,
+  arcgis-sketch * {
+    touch-action: manipulation;
   }
 }
